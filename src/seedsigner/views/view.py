@@ -5,7 +5,7 @@ from typing import Type
 from seedsigner.helpers.l10n import mark_for_translation as _mft
 from seedsigner.gui.components import SeedSignerIconConstants
 from seedsigner.gui.screens import RET_CODE__POWER_BUTTON, RET_CODE__BACK_BUTTON, RET_CODE__DISPLAY_TOGGLE
-from seedsigner.gui.screens.screen import BaseScreen, ButtonOption, LargeButtonScreen, WarningScreen, ErrorScreen
+from seedsigner.gui.screens.screen import BaseScreen, ButtonOption, LargeButtonScreen, ButtonListScreen, WarningScreen, ErrorScreen
 from seedsigner.models.settings import Settings, SettingsConstants
 from seedsigner.models.settings_definition import SettingsDefinition
 from seedsigner.models.threads import BaseThread
@@ -184,7 +184,7 @@ class Destination:
 
         # Instantiate the `View_cls` with the `view_args` dict
         self.view = self.View_cls(**self.view_args)
-    
+
 
     def _run_view(self):
         if self.view.has_redirect:
@@ -201,10 +201,10 @@ class Destination:
         """
             Equality test IGNORES the skip_current_view and clear_history options
         """
-        return (isinstance(obj, Destination) and 
+        return (isinstance(obj, Destination) and
             obj.View_cls == self.View_cls and
             obj.view_args == self.view_args)
-    
+
 
     def __ne__(self, obj):
         return not obj == self
@@ -218,9 +218,10 @@ class Destination:
 #########################################################################################
 class MainMenuView(View):
     SCAN = ButtonOption("Scan", SeedSignerIconConstants.SCAN)
-    SEEDS = ButtonOption("Seeds", SeedSignerIconConstants.SEEDS)
-    TOOLS = ButtonOption("Tools", SeedSignerIconConstants.TOOLS)
+    #RECEIVE = ButtonOption("Receive", SeedSignerIconConstants.PAGE_DOWN)
+    RECEIVE = ButtonOption("Receive", "imgReceive.png")
     SETTINGS = ButtonOption("Settings", SeedSignerIconConstants.SETTINGS)
+    SEEDS = ButtonOption("Seeds", SeedSignerIconConstants.SEEDS)
 
     def run(self):
         from seedsigner.gui.screens.screen import MainMenuScreen
@@ -236,7 +237,7 @@ class MainMenuView(View):
         if controller.auto_wiped:
             controller.auto_wiped = False
             controller.activate_toast(InfoToast(label_text=_("Data wiped after inactivity")))
-        button_data = [self.SCAN, self.SEEDS, self.TOOLS, self.SETTINGS]
+        button_data = [self.SCAN, self.RECEIVE, self.SETTINGS]
         selected_menu_num = self.run_screen(
             MainMenuScreen,
             title=_("Home"),
@@ -254,20 +255,48 @@ class MainMenuView(View):
         if button_data[selected_menu_num] == self.SCAN:
             from seedsigner.views.scan_views import ScanView
             return Destination(ScanView)
-        
+
         elif button_data[selected_menu_num] == self.SEEDS:
             from seedsigner.views.seed_views import SeedsMenuView
             return Destination(SeedsMenuView)
 
-        elif button_data[selected_menu_num] == self.TOOLS:
-            from seedsigner.views.tools_views import ToolsMenuView
-            return Destination(ToolsMenuView)
+        elif button_data[selected_menu_num] == self.RECEIVE:
+            from seedsigner.views.tools_views import ToolsAddressExplorerSelectSourceView
+            return Destination(ToolsAddressExplorerSelectSourceView)
 
         elif button_data[selected_menu_num] == self.SETTINGS:
+            return Destination(SettingsToolsMenuView)
+
+        # elif button_data[selected_menu_num] == self.SETTINGS:
+        #     from seedsigner.views.tools_views import ToolsMenuView
+        #     return Destination(ToolsMenuView)
+
+class SettingsToolsMenuView(View):
+    SETTINGS = ButtonOption("Settings", SeedSignerIconConstants.SETTINGS)
+    TOOLS = ButtonOption("Tools", SeedSignerIconConstants.TOOLS)
+
+    def run(self):
+        button_data = [
+            self.SETTINGS,
+            self.TOOLS,
+        ]
+
+        selected_menu_num = self.run_screen(
+            ButtonListScreen,
+            title=_("Settings"),
+            button_data=button_data,
+        )
+
+        if selected_menu_num == RET_CODE__BACK_BUTTON:
+            return Destination(MainMenuView)
+
+        if button_data[selected_menu_num] == self.SETTINGS:
             from seedsigner.views.settings_views import SettingsMenuView
             return Destination(SettingsMenuView)
 
-
+        if button_data[selected_menu_num] == self.TOOLS:
+            from seedsigner.views.tools_views import ToolsMenuView
+            return Destination(ToolsMenuView)
 
 class PowerOptionsView(View):
     RESET = ButtonOption("Restart", SeedSignerIconConstants.RESTART)
@@ -284,10 +313,10 @@ class PowerOptionsView(View):
 
         if selected_menu_num == RET_CODE__BACK_BUTTON:
             return Destination(BackStackView)
-        
+
         elif button_data[selected_menu_num] == self.RESET:
             return Destination(RestartView)
-        
+
         elif button_data[selected_menu_num] == self.POWER_OFF:
             return Destination(PowerOffView)
 
@@ -441,7 +470,7 @@ class UnhandledExceptionView(View):
             text=self.error[1] + "\n" + self.error[2],
             allow_text_overflow=True,  # Fit what we can, let the rest go off the edges
         )
-        
+
         return Destination(MainMenuView, clear_history=True)
 
 
