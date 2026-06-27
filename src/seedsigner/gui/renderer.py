@@ -43,6 +43,10 @@ class Renderer(ConfigurableSingleton):
         self.lock.acquire()
         try:
             display_config = Settings.get_instance().get_value(SettingsConstants.SETTING__DISPLAY_CONFIGURATION, default_if_none=True)
+
+            if Settings.RUNTIME_PROFILE == "desktop":
+                display_config = "desktop_320x240"
+
             self.display_type = display_config.split("_")[0]
             if self.display_type not in ALL_DISPLAY_TYPES:
                 raise Exception(f"Invalid display type: {self.display_type}")
