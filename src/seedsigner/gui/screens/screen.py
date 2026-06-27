@@ -616,8 +616,8 @@ class LargeButtonScreen(BaseTopNavScreen):
 
         super().__post_init__()
 
-        if len(self.button_data) not in [2, 4]:
-            raise Exception("LargeButtonScreen only supports 2 or 4 buttons")
+        if len(self.button_data) not in [2, 3, 4]:
+            raise Exception("LargeButtonScreen only supports 2, 3, or 4 buttons")
 
         # Maximize 2-across width
         button_width = int((self.canvas_width - (2 * GUIConstants.EDGE_PADDING) - GUIConstants.COMPONENT_PADDING) / 2)
@@ -647,7 +647,9 @@ class LargeButtonScreen(BaseTopNavScreen):
             # else:
             #     print(type(button_option))
 
-            if i % 2 == 0:
+            if len(self.button_data) == 3 and i == 2:
+                button_start_x = int((self.canvas_width - button_width) / 2)
+            elif i % 2 == 0:
                 button_start_x = GUIConstants.EDGE_PADDING
             else:
                 button_start_x = GUIConstants.EDGE_PADDING + button_width + GUIConstants.COMPONENT_PADDING
@@ -711,6 +713,9 @@ class LargeButtonScreen(BaseTopNavScreen):
                         self.buttons[self.selected_button].is_selected = False
                         self.buttons[self.selected_button].render()
 
+                    elif len(self.buttons) == 3 and self.selected_button == 2:
+                        swap_selected_button(0)
+
                     elif len(self.buttons) == 4:
                         swap_selected_button(self.selected_button - 2)
 
@@ -722,13 +727,22 @@ class LargeButtonScreen(BaseTopNavScreen):
                         self.buttons[self.selected_button].is_selected = True
                         self.buttons[self.selected_button].render()
 
+                    elif len(self.buttons) == 3:
+                        if self.selected_button in [0, 1]:
+                            swap_selected_button(2)
+                        elif self.selected_button == 2:
+                            swap_selected_button(1)
+
                     elif self.selected_button in [2, 3]:
                         pass
                     elif len(self.buttons) == 4:
                         swap_selected_button(self.selected_button + 2)
 
                 elif user_input == HardwareButtonsConstants.KEY_RIGHT and not self.top_nav.is_selected:
-                    if self.selected_button in [0, 2]:
+                    if len(self.buttons) == 3:
+                        if self.selected_button in [0, 2]:
+                            swap_selected_button(1)
+                    elif self.selected_button in [0, 2]:
                         swap_selected_button(self.selected_button + 1)
                 
                 elif (user_input == HardwareButtonsConstants.KEY_RIGHT and
@@ -741,7 +755,17 @@ class LargeButtonScreen(BaseTopNavScreen):
                     self.buttons[self.selected_button].render()
 
                 elif user_input == HardwareButtonsConstants.KEY_LEFT and not self.top_nav.is_selected:
-                    if self.selected_button in [1, 3]:
+                    if len(self.buttons) == 3:
+                        if self.selected_button in [1, 2]:
+                            swap_selected_button(0)
+                        else:
+                            if self.top_nav.show_back_button:
+                                self.top_nav.is_selected = True
+                                self.top_nav.render_buttons()
+
+                                self.buttons[self.selected_button].is_selected = False
+                                self.buttons[self.selected_button].render()
+                    elif self.selected_button in [1, 3]:
                         swap_selected_button(self.selected_button - 1)
                     else:
                         # Left from the far edge takes us up to the BACK arrow
