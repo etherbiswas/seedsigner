@@ -4,7 +4,7 @@ from typing import Type
 
 from seedsigner.helpers.l10n import mark_for_translation as _mft
 from seedsigner.gui.components import SeedSignerIconConstants
-from seedsigner.gui.screens import RET_CODE__POWER_BUTTON, RET_CODE__BACK_BUTTON, RET_CODE__DISPLAY_TOGGLE
+from seedsigner.gui.screens import RET_CODE__POWER_BUTTON, RET_CODE__BACK_BUTTON, RET_CODE__DISPLAY_TOGGLE, RET_CODE__SETTINGS_BUTTON
 from seedsigner.gui.screens.screen import BaseScreen, ButtonOption, LargeButtonScreen, ButtonListScreen, WarningScreen, ErrorScreen
 from seedsigner.models.settings import Settings, SettingsConstants
 from seedsigner.models.settings_definition import SettingsDefinition
@@ -236,7 +236,7 @@ class MainMenuView(View):
         if controller.auto_wiped:
             controller.auto_wiped = False
             controller.activate_toast(InfoToast(label_text=_("Data wiped after inactivity")))
-        button_data = [self.SCAN, self.RECEIVE, self.SETTINGS]
+        button_data = [self.SCAN, self.RECEIVE]
         selected_menu_num = self.run_screen(
             MainMenuScreen,
             title=_("Home"),
@@ -245,6 +245,9 @@ class MainMenuView(View):
 
         if selected_menu_num == RET_CODE__POWER_BUTTON:
             return Destination(PowerOptionsView)
+
+        if selected_menu_num == RET_CODE__SETTINGS_BUTTON:
+            return Destination(SettingsToolsMenuView)
 
         if selected_menu_num == RET_CODE__DISPLAY_TOGGLE:
             # Display driver was switched via very-long-press; re-render the

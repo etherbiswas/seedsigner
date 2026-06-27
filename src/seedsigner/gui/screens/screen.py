@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 RET_CODE__BACK_BUTTON = 1000
 RET_CODE__POWER_BUTTON = 1001
 RET_CODE__DISPLAY_TOGGLE = 1002
+RET_CODE__SETTINGS_BUTTON = 1003
 
 
 
@@ -33,7 +34,7 @@ RET_CODE__DISPLAY_TOGGLE = 1002
 class BaseScreen(BaseComponent):
     def __post_init__(self):
         super().__post_init__()
-        
+
         self.hw_inputs = HardwareButtons.get_instance()
 
         # Implementation classes can add their own BaseThread to run in parallel with the
@@ -50,7 +51,7 @@ class BaseScreen(BaseComponent):
 
         # Tracks position on scrollable pages, determines which elements are visible.
         self.scroll_y = 0
-    
+
 
     def get_threads(self) -> List[BaseThread]:
         threads = self.threads.copy()
@@ -214,6 +215,7 @@ class BaseTopNavScreen(BaseScreen):
     title_font_size: int = GUIConstants.get_top_nav_title_font_size()
     show_back_button: bool = True
     show_power_button: bool = False
+    show_settings_button: bool = False
 
     def __post_init__(self):
         super().__post_init__()
@@ -226,6 +228,7 @@ class BaseTopNavScreen(BaseScreen):
             height=GUIConstants.TOP_NAV_HEIGHT,
             show_back_button=self.show_back_button,
             show_power_button=self.show_power_button,
+            show_settings_button=self.show_settings_button,
         )
         self.is_input_in_top_nav = False
 
@@ -258,7 +261,7 @@ class BaseTopNavScreen(BaseScreen):
 
                 elif self.top_nav.is_selected and user_input in HardwareButtonsConstants.KEYS__ANYCLICK:
                     return self.top_nav.selected_button
-                
+
                 else:
                     # Nothing to do with this input
                     continue
@@ -380,7 +383,7 @@ class ButtonListScreen(BaseTopNavScreen):
                 right_icon_name = button_option.right_icon_name
                 button_label_color = button_option.button_label_color
                 active_button_label = button_option.active_button_label
-            
+
             else:
                 raise Exception("Refactor to ButtonOption approach needed!")
 
@@ -706,10 +709,10 @@ class LargeButtonScreen(BaseTopNavScreen):
             with self.renderer.lock:
                 if user_input == HardwareButtonsConstants.KEY_UP:
                     if self.selected_button in [0, 1]:
-                        # Move selection up to top_nav
+                        # Move selection up to top_nav, matching the button column.
+                        self.top_nav.selected_button_position = "right" if self.selected_button == 1 else "left"
                         self.top_nav.is_selected = True
                         self.top_nav.render_buttons()
-
                         self.buttons[self.selected_button].is_selected = False
                         self.buttons[self.selected_button].render()
 
@@ -738,21 +741,33 @@ class LargeButtonScreen(BaseTopNavScreen):
                     elif len(self.buttons) == 4:
                         swap_selected_button(self.selected_button + 2)
 
+                    elif user_input == HardwareButtonsConstants.KEY_RIGHT and self.top_nav.is_selected:
+                        if self.top_nav.show_power_button:
+                            self.top_nav.selected_button_position = "right"
+                            self.top_nav.render_buttons()
+
+                elif user_input == HardwareButtonsConstants.KEY_RIGHT and self.top_nav.is_selected:
+                    if self.top_nav.show_power_button:
+                        self.top_nav.selected_button_position = "right"
+                        self.top_nav.render_buttons()
+                    else:
+                        self.top_nav.is_selected = False
+                        self.top_nav.render_buttons()
+
+                        self.buttons[self.selected_button].is_selected = True
+                        self.buttons[self.selected_button].render()
+
                 elif user_input == HardwareButtonsConstants.KEY_RIGHT and not self.top_nav.is_selected:
                     if len(self.buttons) == 3:
                         if self.selected_button in [0, 2]:
                             swap_selected_button(1)
                     elif self.selected_button in [0, 2]:
                         swap_selected_button(self.selected_button + 1)
-                
-                elif (user_input == HardwareButtonsConstants.KEY_RIGHT and
-                        self.top_nav.is_selected and not self.top_nav.show_power_button
-                    ):
-                    self.top_nav.is_selected = False
-                    self.top_nav.render_buttons()
 
-                    self.buttons[self.selected_button].is_selected = True
-                    self.buttons[self.selected_button].render()
+                elif user_input == HardwareButtonsConstants.KEY_LEFT and self.top_nav.is_selected:
+                    if self.top_nav.show_back_button or self.top_nav.show_settings_button:
+                        self.top_nav.selected_button_position = "left"
+                        self.top_nav.render_buttons()
 
                 elif user_input == HardwareButtonsConstants.KEY_LEFT and not self.top_nav.is_selected:
                     if len(self.buttons) == 3:
@@ -1063,7 +1078,7 @@ class WarningEdgesThread(BaseThread):
 
                     # Write the screen updates
                     screen.renderer.show_image()
-                
+
                 if inhale_factor == inhale_max:
                     inhale_step = -1
                 elif inhale_factor == 0 and inhale_step == -1:
@@ -1182,7 +1197,7 @@ class KeyboardScreen(BaseTopNavScreen):
     """
         Generalized Screen for a single Keyboard layout writing user input to a
         TextEntryDisplay.
-        
+
         Args:
         * rows
         * cols
@@ -1217,12 +1232,12 @@ class KeyboardScreen(BaseTopNavScreen):
         else:
             self.user_input = ""
 
-        # Set up the keyboard params        
+        # Set up the keyboard params
         if self.show_save_button:
             right_panel_buttons_width = 60
             hw_button_x = self.canvas_width - right_panel_buttons_width + GUIConstants.COMPONENT_PADDING
             hw_button_y = int(self.canvas_height - GUIConstants.BUTTON_HEIGHT) / 2 + 60
-            
+
             self.keyboard_width = self.canvas_width - (GUIConstants.EDGE_PADDING + GUIConstants.COMPONENT_PADDING + right_panel_buttons_width - GUIConstants.COMPONENT_PADDING)
 
             # Render the right button panel (only has a Key3 "Save" button)
@@ -1301,7 +1316,7 @@ class KeyboardScreen(BaseTopNavScreen):
             )
 
             with self.renderer.lock:
-                # Check possible exit conditions   
+                # Check possible exit conditions
                 if self.top_nav.is_selected and input == HardwareButtonsConstants.KEY_PRESS:
                     return RET_CODE__BACK_BUTTON
 
@@ -1383,7 +1398,7 @@ class KeyboardScreen(BaseTopNavScreen):
     def update_title(self) -> bool:
         """
             Optionally update the self.title after each completed key input.
-            
+
             e.g. to increment the dice roll count:
                 self.title = _("Roll {}".format(self.cursor_position + 1))
         """
@@ -1397,6 +1412,7 @@ class MainMenuScreen(LargeButtonScreen):
     title_font_size: int = 26
     show_back_button: bool = False
     show_power_button: bool = True
+    show_settings_button: bool = True
 
     # Very-long-press (5 seconds) on a joystick direction switches the display driver.
     VERY_LONG_PRESS_MS = 5000

@@ -1729,6 +1729,8 @@ class TopNav(BaseComponent):
     font_color: str = GUIConstants.BODY_FONT_COLOR
     show_back_button: bool = True
     show_power_button: bool = False
+    show_settings_button: bool = False
+    selected_button_position: str = "left"
     is_selected: bool = False
 
 
@@ -1743,9 +1745,9 @@ class TopNav(BaseComponent):
         if not self.width:
             self.width = self.canvas_width
 
-        if self.show_back_button:
+        if self.show_back_button or self.show_settings_button:
             self.left_button = IconButton(
-                icon_name=SeedSignerIconConstants.BACK,
+                icon_name=SeedSignerIconConstants.BACK if self.show_back_button else SeedSignerIconConstants.SETTINGS,
                 icon_size=GUIConstants.ICON_INLINE_FONT_SIZE,
                 screen_x=GUIConstants.EDGE_PADDING,
                 screen_y=GUIConstants.EDGE_PADDING - 1,  # Text can't perfectly vertically center relative to the button; shifting it down 1px looks better.
@@ -1764,7 +1766,7 @@ class TopNav(BaseComponent):
             )
 
         min_text_x = GUIConstants.EDGE_PADDING
-        if self.show_back_button:
+        if self.show_back_button or self.show_settings_button:
             # Don't let the title intrude on the BACK button
             min_text_x = self.left_button.screen_x + self.left_button.width + GUIConstants.COMPONENT_PADDING
 
@@ -1803,14 +1805,18 @@ class TopNav(BaseComponent):
 
     @property
     def selected_button(self):
-        from .screens import RET_CODE__BACK_BUTTON, RET_CODE__POWER_BUTTON
+        from .screens import RET_CODE__BACK_BUTTON, RET_CODE__POWER_BUTTON, RET_CODE__SETTINGS_BUTTON
         if not self.is_selected:
             return None
-        if self.show_back_button:
-            return RET_CODE__BACK_BUTTON
+
+        if self.selected_button_position == "left":
+            if self.show_back_button:
+                return RET_CODE__BACK_BUTTON
+            if self.show_settings_button:
+                return RET_CODE__SETTINGS_BUTTON
+
         if self.show_power_button:
             return RET_CODE__POWER_BUTTON
-
 
     def render(self):
         self.title.render()
@@ -1818,11 +1824,16 @@ class TopNav(BaseComponent):
 
 
     def render_buttons(self):
-        if self.show_back_button:
-            self.left_button.is_selected = self.is_selected
+        has_left_button = self.show_back_button or self.show_settings_button
+
+        if has_left_button:
+            self.left_button.is_selected = self.is_selected and self.selected_button_position == "left"
             self.left_button.render()
+
         if self.show_power_button:
-            self.right_button.is_selected = self.is_selected
+            self.right_button.is_selected = self.is_selected and (
+                self.selected_button_position == "right" or not has_left_button
+            )
             self.right_button.render()
 
 
