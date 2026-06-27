@@ -217,10 +217,8 @@ class Destination:
 #
 #########################################################################################
 class MainMenuView(View):
-    #SCAN = ButtonOption("Scan", SeedSignerIconConstants.SCAN)
-    #RECEIVE = ButtonOption("Receive", SeedSignerIconConstants.PAGE_DOWN)
-    SCAN = ButtonOption("Scan", "imgScan48.png")
-    RECEIVE = ButtonOption("Receive", "imgReceive.png")
+    SCAN = ButtonOption("SCAN", "imgScan48.png")
+    RECEIVE = ButtonOption("RECEIVE", "imgReceive.png")
     SETTINGS = ButtonOption("Settings", SeedSignerIconConstants.SETTINGS)
     SEEDS = ButtonOption("Seeds", SeedSignerIconConstants.SEEDS)
 
