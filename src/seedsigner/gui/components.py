@@ -1470,9 +1470,9 @@ class Button(BaseComponent):
         # Preload the icon and its "_selected" variant
         icon_padding = GUIConstants.COMPONENT_PADDING
         if self.icon_name:
-            if self.icon_name == "imgReceive.png":
-                self.icon = ImageIcon(image_name="imgReceive.png", icon_size=self.icon_size)
-                self.icon_selected = ImageIcon(image_name="imgReceive.png", icon_size=self.icon_size)
+            if self.icon_name in ("imgReceive.png", "imgScan48.png"):
+                self.icon = ImageIcon(image_name=self.icon_name, icon_size=self.icon_size)
+                self.icon_selected = ImageIcon(image_name=self.icon_name, icon_size=self.icon_size)
             else:
                 self.icon = Icon(icon_name=self.icon_name, icon_size=self.icon_size, icon_color=self.icon_color)
                 self.icon_selected = Icon(icon_name=self.icon_name, icon_size=self.icon_size, icon_color=self.selected_icon_color)
@@ -1536,7 +1536,7 @@ class Button(BaseComponent):
                 font_name=self.font_name,
                 font_size=self.font_size,
                 supersampling_factor=1,  # disable; not necessary at button font size. Also black text on orange supersamples poorly
-                font_color=self.selected_font_color,
+                font_color=self.font_color if self.icon_name == "imgScan48.png" else self.selected_font_color,
                 background_color=self.selected_color,
                 screen_x=self.screen_x,
                 screen_y=self.screen_y + self.text_y_offset,
@@ -1578,6 +1578,9 @@ class Button(BaseComponent):
             background_color = self.background_color
             font_color = self.font_color
             outline_color = self.outline_color
+
+        if self.icon_name == "imgScan48.png":
+            font_color = self.font_color
 
         self.image_draw.rounded_rectangle(
             (
