@@ -1409,7 +1409,7 @@ class KeyboardScreen(BaseTopNavScreen):
 @dataclass
 class MainMenuScreen(LargeButtonScreen):
     # Override LargeButtonScreen defaults
-    title_font_size: int = 26
+    title_font_size: int = 13
     show_back_button: bool = False
     show_power_button: bool = True
     show_settings_button: bool = True

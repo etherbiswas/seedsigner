@@ -222,6 +222,19 @@ class MainMenuView(View):
     SETTINGS = ButtonOption("Settings", SeedSignerIconConstants.SETTINGS)
     SEEDS = ButtonOption("Seeds", SeedSignerIconConstants.SEEDS)
 
+    @staticmethod
+    def get_home_title() -> str:
+        from pathlib import Path
+
+        label_path = Path(__file__).resolve().parents[3] / "label.txt"
+
+        try:
+            label = label_path.read_text(encoding="utf-8").strip().splitlines()[0]
+        except (OSError, IndexError):
+            label = ""
+
+        return f"@{label}" if label else "@"
+
     def run(self):
         from seedsigner.gui.screens.screen import MainMenuScreen
         from seedsigner.controller import Controller
@@ -239,7 +252,7 @@ class MainMenuView(View):
         button_data = [self.SCAN, self.RECEIVE]
         selected_menu_num = self.run_screen(
             MainMenuScreen,
-            title=_("Home"),
+            title=self.get_home_title(),
             button_data=button_data,
         )
 
