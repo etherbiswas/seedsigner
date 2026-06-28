@@ -28,9 +28,6 @@ class DisplayDriver:
                 raise ValueError("ST7789 display only supports 240x240 or 320x240 resolutions")
 
             if width == 240:
-                # TODO: For now the original ST7789 driver has to be used for 240x240.
-                # The mpy version below renders incorrectly (almost like each row of pixels
-                # is one pixel short, so the entire screen exhibits a diagonal skew).
                 from seedsigner.hardware.displays.ST7789 import ST7789
                 self.display = ST7789()
 
