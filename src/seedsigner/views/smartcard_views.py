@@ -42,7 +42,7 @@ from seedsigner.models.settings_definition import SettingsConstants
 try:
     from pysatochip import satochip
     from pysatochip.exception import UnexpectedSW12Error
-    from pysatochip.satochip_protocol_helper import format_sw_error
+    from seedsigner.helpers.iso7816 import format_sw_error
 except ImportError:
     pass
 
