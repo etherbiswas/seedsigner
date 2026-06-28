@@ -55,7 +55,7 @@ class LogoScreen(BaseScreen):
         self.logo = load_boot_logo_image()
 
         self.partners = [
-            "sese",
+            "hrf",
         ]
 
         self.partner_logos: dict = {}
@@ -152,7 +152,7 @@ class OpeningSplashScreen(LogoScreen):
             partner_logo: Image.Image = self.partner_logos[self.get_random_partner()]
             font = Fonts.get_font(GUIConstants.get_top_nav_title_font_name(), GUIConstants.get_body_font_size())
             # TRANSLATOR_NOTE: This is on the opening splash screen, displayed above the Seedsigner logo
-            sponsor_text = _("An unofficial fork of:")
+            sponsor_text = _("")
             (left, top, tw, th) = font.getbbox(sponsor_text, anchor="lt")
 
             x = int((self.renderer.canvas_width) / 2)
@@ -191,7 +191,7 @@ class ScreensaverScreen(LogoScreen):
     @property
     def is_running(self):
         return self._is_running
-    
+
 
     def rand_increment(self):
         max_increment = 10.0
@@ -201,7 +201,7 @@ class ScreensaverScreen(LogoScreen):
             return -1.0 * increment
         return increment
 
-    
+
     def _refresh_screensaver_image(self):
         self.logo = load_boot_logo_image()
 
