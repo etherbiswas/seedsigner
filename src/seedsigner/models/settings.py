@@ -111,9 +111,9 @@ class Settings(Singleton):
     @classmethod
     def get_platform_default_display_config(cls) -> str:
         profile_map = {
-            "desktop": SettingsConstants.DISPLAY_CONFIGURATION__DESKTOP__240x240,
-            "rpi_26": SettingsConstants.DISPLAY_CONFIGURATION__ST7789__240x240,
-            "rpi_40": SettingsConstants.DISPLAY_CONFIGURATION__ST7789__240x240,
+            "desktop": SettingsConstants.DISPLAY_CONFIGURATION__DESKTOP__320x240,
+            "rpi_26": SettingsConstants.DISPLAY_CONFIGURATION__ST7789__320x240,
+            "rpi_40": SettingsConstants.DISPLAY_CONFIGURATION__ST7789__320x240,
             "luckfox_22": SettingsConstants.DISPLAY_CONFIGURATION__ST7789__240x240,
             "luckfox_40": SettingsConstants.DISPLAY_CONFIGURATION__ST7789__240x240,
             "luckfox_pi": SettingsConstants.DISPLAY_CONFIGURATION__ST7789__240x240,
@@ -237,7 +237,7 @@ class Settings(Singleton):
         version = data.split()[0].split("::")[1]
         if version != "v1":
             raise InvalidSettingsQRData(f"Unsupported SettingsQR version: {version}")
-        
+
         # Start parsing key/value settings at the nth split() index
         split_index = 1
 
@@ -269,7 +269,7 @@ class Settings(Singleton):
                     value = float(value) if "." in value else int(value)
                 except ValueError:
                     pass
-            
+
             # Replace abbreviated name with full attr_name
             settings_entry = SettingsDefinition.get_settings_entry_by_abbreviated_name(abbreviated_name)
             if not settings_entry:
@@ -284,7 +284,7 @@ class Settings(Singleton):
             for v in values:
                 if v not in [opt[0] for opt in settings_entry.selection_options]:
                     if settings_entry.attr_name == SettingsConstants.SETTING__PERSISTENT_SETTINGS and v == SettingsConstants.OPTION__ENABLED:
-                        # Special case: trying to enable Persistent Settings when 
+                        # Special case: trying to enable Persistent Settings when
                         # DISABLED is the only option allowed (because the SD card is not
                         # inserted. Explicitly set to DISABLED.
                         value = SettingsConstants.OPTION__DISABLED
@@ -298,7 +298,7 @@ class Settings(Singleton):
 
     def __str__(self):
         return json.dumps(self._data, indent=4)
-    
+
 
     # ------------------------------------------------------------------
     # Background-save infrastructure
@@ -458,7 +458,7 @@ class Settings(Singleton):
             else:
                 if current_value == value:
                     return
-        
+
         # Special handling for toggling persistence
         if attr_name == SettingsConstants.SETTING__PERSISTENT_SETTINGS and value == SettingsConstants.OPTION__DISABLED:
             try:
@@ -472,7 +472,7 @@ class Settings(Singleton):
             import time
             import seedsigner
             #from seedsigner.gui.screens.screen import LoadingScreenThread, WarningScreen
-            
+
             logger.debug("Smartcard Interface Changed")
             logger.debug("Value: %s", value)
             # Update PCSC ignore list (Needed for IFD-NFC, but also add ability to disable SEC1210 or other readers if required)
@@ -503,21 +503,21 @@ class Settings(Singleton):
                     self.loading_screen.start()
                 except:
                     pass
- 
+
                 # Different Raspberry Pi models have different port config, see
                 # https://github.com/mvp/uhubctl?tab=readme-ov-file#raspberry-pi-b2b3b
                 if "Zero" in rpi_type: # For RPi0, 02w
                     os.system(self.SU_COMMAND_PREFIX + "uhubctl -l 1 -a 0")
-                    
-                elif "Pi 4" in rpi_type: # For RPi4 
+
+                elif "Pi 4" in rpi_type: # For RPi4
                     os.system(self.SU_COMMAND_PREFIX + "uhubctl -l 2 -a 0")
                     os.system(self.SU_COMMAND_PREFIX + "uhubctl -l 3 -a 0")
                     os.system(self.SU_COMMAND_PREFIX + "uhubctl -l 1-1 -a 0")
-                
+
                 else:
                     # For Raspberry Pi B+,2B,3B, 3B+
                     os.system(self.SU_COMMAND_PREFIX + "uhubctl -l 1-1 -p 2 -a 0")
-                
+
                 try:
                     self.loading_screen.stop()
                 except:
@@ -534,15 +534,15 @@ class Settings(Singleton):
 
                 # Different Raspberry Pi models have different port config, see
                 # https://github.com/mvp/uhubctl?tab=readme-ov-file#raspberry-pi-b2b3b
-                 
+
                 if "Zero" in rpi_type: # For RPi0, 02w
                     os.system(self.SU_COMMAND_PREFIX + "uhubctl -l 1 -a 1")
-                    
-                elif "Pi 4" in rpi_type: # For RPi4 
+
+                elif "Pi 4" in rpi_type: # For RPi4
                     os.system(self.SU_COMMAND_PREFIX + "uhubctl -l 2 -a 1")
                     os.system(self.SU_COMMAND_PREFIX + "uhubctl -l 3 -a 1")
                     os.system(self.SU_COMMAND_PREFIX + "uhubctl -l 1-1 -a 1")
-                
+
                 else:
                     # For Raspberry Pi B+,2B,3B, 3B+
                     os.system(self.SU_COMMAND_PREFIX + "uhubctl -l 1-1 -p 2 -a 1")
@@ -599,7 +599,7 @@ class Settings(Singleton):
                     self.loading_screen.start()
                 except:
                     pass
-                
+
                 os.system(self.SU_COMMAND_PREFIX + "openct-control shutdown")
                 time.sleep(3)
 
@@ -729,7 +729,7 @@ class Settings(Singleton):
         """
             Figures out the mapping from value to display_name for the current value's
             tuple(value, display_name) definition, if it's defined that way.
-            
+
             If the selection_options are defined as simple strings, we just return the
             string.
 
@@ -742,7 +742,7 @@ class Settings(Singleton):
         if settings_entry.type in [SettingsConstants.TYPE__FREE_ENTRY, SettingsConstants.TYPE__MULTISELECT]:
             raise Exception(f"Unsupported SettingsEntry.type: {settings_entry.type}")
         return settings_entry.get_selection_option_display_name_by_value(value=self._data[attr_name])
-    
+
 
     def get_multiselect_value_display_names(self, attr_name: str) -> List[str]:
         """
@@ -817,6 +817,6 @@ class Settings(Singleton):
                 entry = SettingsDefinition.get_settings_entry(SettingsConstants.SETTING__PERSISTENT_SETTINGS)
                 entry.selection_options = SettingsConstants.OPTIONS__ONLY_DISABLED
                 entry.help_text = SettingsConstants.PERSISTENT_SETTINGS__SD_REMOVED__HELP_TEXT
-            
+
             else:
                 raise Exception(f"Invalid MicroSD action: {action}")
