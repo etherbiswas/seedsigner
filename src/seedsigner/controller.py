@@ -65,7 +65,7 @@ class BackStack(list[Destination]):
             out += f"    {index:2d}: {destination}\n"
         out += "]"
         return out
-            
+
 
 
 class StopFlowBasedTest(Exception):
@@ -151,8 +151,8 @@ class Controller(Singleton):
         Note: In many/most cases you'll need to do the Controller import within a method
         rather than at the top in order avoid circular imports.
     """
-    
-    VERSION = "SeSi-0.8.6+ShSi-B11"
+
+    VERSION = ""
 
     # Declare class member vars with type hints to enable richer IDE support throughout
     # the code.
@@ -222,7 +222,7 @@ class Controller(Singleton):
         else:
             # Instantiate the one and only Controller instance
             return cls.configure_instance()
-    
+
 
     @classmethod
     def reset_instance(cls):
@@ -270,7 +270,7 @@ class Controller(Singleton):
                 pin_mapping.get("buttons"),
                 pin_mapping.get("camera"),
             )
-        
+
         controller.microsd = MicroSD.get_instance()
         controller.microsd.start_detection()
 
@@ -314,7 +314,7 @@ class Controller(Singleton):
     def camera(self):
         from .hardware.camera import Camera
         return Camera.get_instance()
-    
+
 
     @property
     def storage(self):
@@ -369,7 +369,7 @@ class Controller(Singleton):
                 # One more pop back gives us the actual "back" View_cls
                 return self.back_stack.pop()
         return Destination(None)
-    
+
 
     def clear_back_stack(self):
         self.back_stack = BackStack()
@@ -430,7 +430,7 @@ class Controller(Singleton):
                 next_destination = initial_destination
             else:
                 next_destination = Destination(MainMenuView)
-            
+
             # Skip the "remove SD card" tip on Luckfox, where removable media
             # handling and expected workflows differ from SeedSigner OS defaults.
             if Settings.RUNTIME_PROFILE not in {"luckfox_22", "luckfox_40", "luckfox_pi", "desktop"}:
@@ -445,7 +445,7 @@ class Controller(Singleton):
                 if next_destination.View_cls == MainMenuView:
                     # Home always wipes the back_stack
                     self.clear_back_stack()
-                    
+
                     # Home always wipes the back_stack/state of temp vars
                     self.resume_main_flow = None
                     # self.multisig_wallet_descriptor = None
@@ -470,7 +470,7 @@ class Controller(Singleton):
 
                     # Always drop any cached OpenPGP admin PIN when returning home
                     self.GPG_Admin_PIN = None
-                
+
                 logger.info(f"\nback_stack: {self.back_stack}")
 
                 try:
@@ -530,7 +530,7 @@ class Controller(Singleton):
             from seedsigner.gui.renderer import Renderer
             if self.is_screensaver_running:
                 self.screensaver.stop()
-            
+
             if self.toast_notification_thread and self.toast_notification_thread.is_alive():
                 self.toast_notification_thread.stop()
 
@@ -567,11 +567,11 @@ class Controller(Singleton):
             from seedsigner.views.screensaver import ScreensaverScreen
             from seedsigner.hardware.buttons import HardwareButtons
             self.screensaver = ScreensaverScreen(HardwareButtons.get_instance())
-        
+
         # Start the screensaver, but it will block until it can acquire the Renderer.lock.
         self.screensaver.start()
         logger.info("Controller: Screensaver started")
-    
+
 
     def reset_screensaver_timeout(self):
         """
@@ -596,7 +596,7 @@ class Controller(Singleton):
             # Can only run one toast at a time
             logger.info(f"Controller: stopping {self.toast_notification_thread.__class__.__name__}")
             self.toast_notification_thread.stop()
-        
+
         self.toast_notification_thread = toast_manager_thread
         logger.info(f"Controller: starting {self.toast_notification_thread.__class__.__name__}")
         self.toast_notification_thread.start()
@@ -677,7 +677,7 @@ class Controller(Singleton):
             if ", line " in traceback_line:
                 line_info = traceback_line.split("/")[-1].replace("\"", "").replace("line ", "")
                 break
-        
+
         error = [
             exception_type,
             line_info,
