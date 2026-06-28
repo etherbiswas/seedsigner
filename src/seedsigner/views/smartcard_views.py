@@ -38,6 +38,8 @@ from seedsigner.hardware.microsd import MicroSD
 from seedsigner.helpers import embit_utils, seedkeeper_utils
 from seedsigner.models.seed import InvalidSeedException, Seed, XprvSeed
 from seedsigner.models.settings_definition import SettingsConstants
+from seedsigner.helpers.iso7816 import format_sw_error
+from seedsigner.models.encode_qr import GenericStaticQrEncoder
 
 try:
     from pysatochip import satochip
