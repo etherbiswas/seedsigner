@@ -3753,25 +3753,32 @@ class SatochipExportXpubScriptTypeView(View):
         status = Satochip_Connector.card_get_status()[3]
         schnorr_supported = status.get("feature_schnorr_policy") == 0
 
+        enabled_script_types = self.settings.get_value(SettingsConstants.SETTING__SCRIPT_TYPES)
+        if isinstance(enabled_script_types, str):
+            enabled_script_types = [enabled_script_types]
+
         button_data = []
         for script_type, display_name in SettingsConstants.ALL_SCRIPT_TYPES:
-            if script_type in self.settings.get_value(SettingsConstants.SETTING__SCRIPT_TYPES):
+            if script_type in enabled_script_types:
                 if script_type == SettingsConstants.TAPROOT and not schnorr_supported:
                     continue
                 button_data.append(ButtonOption(display_name, return_data=script_type))
 
-        selected_menu_num = self.run_screen(
-            ButtonListScreen,
-            title="Export Xpub",
-            is_button_text_centered=False,
-            button_data=button_data,
-            is_bottom_list=True,
-        )
+        if len(button_data) == 1:
+            script_type = button_data[0].return_data
+        else:
+            selected_menu_num = self.run_screen(
+                ButtonListScreen,
+                title="Export Xpub",
+                is_button_text_centered=False,
+                button_data=button_data,
+                is_bottom_list=True,
+            )
 
-        if selected_menu_num == RET_CODE__BACK_BUTTON:
-            return Destination(BackStackView)
+            if selected_menu_num == RET_CODE__BACK_BUTTON:
+                return Destination(BackStackView)
 
-        script_type = button_data[selected_menu_num].return_data
+            script_type = button_data[selected_menu_num].return_data
         if script_type == SettingsConstants.CUSTOM_DERIVATION:
             return Destination(
                 SatochipExportXpubCustomDerivationView,
