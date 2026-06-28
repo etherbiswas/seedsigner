@@ -149,7 +149,9 @@ class OpeningSplashScreen(LogoScreen):
                 time.sleep(1)
 
             # Set up the partner logo
-            partner_logo: Image.Image = self.partner_logos[self.get_random_partner()]
+            partner = self.get_random_partner()
+            partner_logo: Image.Image = self.partner_logos[partner]
+            partner_logo_offset_x = 20 if partner == "hrf" else 0
             font = Fonts.get_font(GUIConstants.get_top_nav_title_font_name(), GUIConstants.get_body_font_size())
             # TRANSLATOR_NOTE: This is on the opening splash screen, displayed above the Seedsigner logo
             sponsor_text = _("")
@@ -161,7 +163,7 @@ class OpeningSplashScreen(LogoScreen):
             self.renderer.canvas.paste(
                 partner_logo,
                 (
-                    int((self.renderer.canvas_width - partner_logo.width) / 2),
+                    int((self.renderer.canvas_width - partner_logo.width) / 2) + partner_logo_offset_x,
                     y + th + int(GUIConstants.COMPONENT_PADDING/2)
                 )
             )
