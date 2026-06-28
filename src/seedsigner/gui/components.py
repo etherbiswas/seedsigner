@@ -29,16 +29,16 @@ class GUIConstants:
 
     BACKGROUND_COLOR = "#000000"
     INACTIVE_COLOR = "#414141"
-    ACCENT_COLOR = "#FF9F0A" # Active Color
-    WARNING_COLOR = "#FFD60A"
+    ACCENT_COLOR = "#FA8025" # Active Color
+    WARNING_COLOR = "#FF9F0A"
     DIRE_WARNING_COLOR = "#FF5700"
-    ERROR_COLOR = "#FF1B0A"
-    SUCCESS_COLOR = "#30D158"
-    INFO_COLOR = "#409CFF"
+    ERROR_COLOR = "#F2594B"
+    SUCCESS_COLOR = "#b0b846"
+    INFO_COLOR = "#80aa9e"
     BITCOIN_ORANGE = "#FF9416"
-    TESTNET_COLOR = "#00F100"
-    REGTEST_COLOR = "#00CAF1"
-    GREEN_INDICATOR_COLOR = "#00FF00"
+    TESTNET_COLOR = "#8bba7f"
+    REGTEST_COLOR = "#0d3138"
+    GREEN_INDICATOR_COLOR = "#b0b846"
 
     ICON_FONT_NAME__FONT_AWESOME = "Font_Awesome_6_Free-Solid-900"
     ICON_FONT_NAME__SEEDSIGNER = "seedsigner-icons"
@@ -103,8 +103,7 @@ class GUIConstants:
     BUTTON_HEIGHT = 32
     BUTTON_SELECTED_FONT_COLOR = BACKGROUND_COLOR
 
-    NOTIFICATION_COLOR = "#00F100"
-
+    NOTIFICATION_COLOR = "#b0b846"
 
     @staticmethod
     def get_body_font_name(locale=None):
