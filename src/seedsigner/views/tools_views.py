@@ -338,20 +338,20 @@ def _format_word_password(words: list[str], separator: str) -> str:
     return "".join(words)
 
 class ToolsMenuView(View):
+    CLEAR_DESCRIPTOR = ButtonOption("Clear Loaded Descriptor", SeedSignerIconConstants.FINGERPRINT)
     IMAGE = ButtonOption(" New seed", FontAwesomeIconConstants.CAMERA)
     DICE = ButtonOption("New seed", FontAwesomeIconConstants.DICE)
     SLIP39_IMAGE = ButtonOption("SLIP39 seed", FontAwesomeIconConstants.CAMERA)
     SLIP39_DICE = ButtonOption("SLIP39 seed", FontAwesomeIconConstants.DICE)
     KEYBOARD = ButtonOption("Calc 12th/24th word", FontAwesomeIconConstants.KEYBOARD)
     ADDRESS_EXPLORER = ButtonOption("Address Explorer")
-    VERIFY_ADDRESS = ButtonOption("Verify address")
+    VERIFY_ADDRESS = ButtonOption("Verify address", SeedSignerIconConstants.QRCODE)
     TEXTQRCODE = ButtonOption("Text QR Code")
-    PASSWORD_GENERATOR = ButtonOption("Password Generator", FontAwesomeIconConstants.LOCK)
+    #PASSWORD_GENERATOR = ButtonOption("Password Generator", FontAwesomeIconConstants.LOCK)
     SMARTCARD = ButtonOption("Smartcard Tools", FontAwesomeIconConstants.LOCK)
     MICROSD = ButtonOption("MicroSD Tools")
     BATTERY_CALIBRATION = ButtonOption("Battery Calibration")
     GPG = ButtonOption("GPG Tools")
-    CLEAR_DESCRIPTOR = ButtonOption("Clear Multisig Descriptor")
     NETWORK_INFO = ButtonOption("Network Info")
 
     def __init__(self, include_password_generator: bool = True):
@@ -361,8 +361,8 @@ class ToolsMenuView(View):
     def run(self):
         button_data = [self.IMAGE, self.DICE]
 
-        if getattr(self, "include_password_generator", True):
-            button_data.append(self.PASSWORD_GENERATOR)
+        # if getattr(self, "include_password_generator", True):
+        #     button_data.append(self.PASSWORD_GENERATOR)
 
         if self.settings.get_value(SettingsConstants.SETTING__SLIP39_SEEDS) == SettingsConstants.OPTION__ENABLED:
             button_data.extend([self.SLIP39_IMAGE, self.SLIP39_DICE])
@@ -374,15 +374,15 @@ class ToolsMenuView(View):
         battery_calibration_button = self.BATTERY_CALIBRATION if BatteryHat.get_instance().is_enabled() else None
 
         button_data.extend([
+            self.CLEAR_DESCRIPTOR,
             self.KEYBOARD,
             #self.ADDRESS_EXPLORER,
             self.VERIFY_ADDRESS,
-            self.TEXTQRCODE,
-            self.MICROSD,
+            #self.TEXTQRCODE,
+            #self.MICROSD,
             battery_calibration_button,
-            self.NETWORK_INFO if Path("/usr/bin/network-info").is_file() else None,
-            self.GPG,
-            self.CLEAR_DESCRIPTOR,
+            #self.NETWORK_INFO if Path("/usr/bin/network-info").is_file() else None,
+            #self.GPG,
         ])
         button_data = [button for button in button_data if button is not None]
 
@@ -394,6 +394,17 @@ class ToolsMenuView(View):
         )
 
         if selected_menu_num == RET_CODE__BACK_BUTTON:
+            return Destination(BackStackView)
+
+        elif button_data[selected_menu_num] == self.CLEAR_DESCRIPTOR:
+            self.controller.multisig_wallet_descriptor = None
+            self.run_screen(
+                LargeIconStatusScreen,
+                title="Success",
+                status_headline=None,
+                text=f"Loaded Descriptor Cleared",
+                show_back_button=False,
+            )
             return Destination(BackStackView)
 
         elif button_data[selected_menu_num] == self.IMAGE:
@@ -420,37 +431,26 @@ class ToolsMenuView(View):
             from seedsigner.views.scan_views import ScanAddressView
             return Destination(ScanAddressView)
 
-        elif button_data[selected_menu_num] == self.TEXTQRCODE:
-            return Destination(ToolsTextQRView)
-
-        elif button_data[selected_menu_num] == self.PASSWORD_GENERATOR:
-            return Destination(ToolsPasswordGeneratorTypeView)
-
+        # elif button_data[selected_menu_num] == self.TEXTQRCODE:
+        #     return Destination(ToolsTextQRView)
+        #
+        # elif button_data[selected_menu_num] == self.PASSWORD_GENERATOR:
+        #     return Destination(ToolsPasswordGeneratorTypeView)
+        #
         elif button_data[selected_menu_num] == self.SMARTCARD:
             return Destination(ToolsSmartcardMenuView)
-
-        elif button_data[selected_menu_num] == self.MICROSD:
-            return Destination(ToolsMicroSDMenuView)
-
-        elif button_data[selected_menu_num] == self.BATTERY_CALIBRATION:
-            return Destination(ToolsBatteryCalibrationView)
-
-        elif button_data[selected_menu_num] == self.NETWORK_INFO:
-            return Destination(ToolsNetworkInfoView)
-
-        elif button_data[selected_menu_num] == self.GPG:
-            return Destination(ToolsGPGMenuView)
-
-        elif button_data[selected_menu_num] == self.CLEAR_DESCRIPTOR:
-            self.controller.multisig_wallet_descriptor = None
-            self.run_screen(
-                LargeIconStatusScreen,
-                title="Success",
-                status_headline=None,
-                text=f"Multisig Descriptor Cleared",
-                show_back_button=False,
-            )
-            return Destination(BackStackView)
+        #
+        # elif button_data[selected_menu_num] == self.MICROSD:
+        #     return Destination(ToolsMicroSDMenuView)
+        #
+        # elif button_data[selected_menu_num] == self.BATTERY_CALIBRATION:
+        #     return Destination(ToolsBatteryCalibrationView)
+        #
+        # elif button_data[selected_menu_num] == self.NETWORK_INFO:
+        #     return Destination(ToolsNetworkInfoView)
+        #
+        # elif button_data[selected_menu_num] == self.GPG:
+        #     return Destination(ToolsGPGMenuView)
 
 
 
@@ -1066,6 +1066,8 @@ class ToolsCalcFinalWordDoneView(View):
     Address Explorer Views
 ****************************************************************************"""
 class ToolsAddressExplorerSelectSourceView(View):
+    LOADED_DESCRIPTOR = ButtonOption("Loaded Descriptor", SeedSignerIconConstants.FINGERPRINT)
+    SATOCHIP = ButtonOption("Load from Satochip", SeedSignerIconConstants.FINGERPRINT)
     SCAN_SEED = ButtonOption("Scan a seed", SeedSignerIconConstants.QRCODE)
     SCAN_DESCRIPTOR = ButtonOption("Scan wallet descriptor", SeedSignerIconConstants.QRCODE)
     TYPE_12WORD = ButtonOption("Enter 12-word seed", FontAwesomeIconConstants.KEYBOARD, return_data=12)
@@ -1073,8 +1075,6 @@ class ToolsAddressExplorerSelectSourceView(View):
     TYPE_18WORD = ButtonOption("Enter 18-word seed", FontAwesomeIconConstants.KEYBOARD, return_data=18)
     TYPE_21WORD = ButtonOption("Enter 21-word seed", FontAwesomeIconConstants.KEYBOARD, return_data=21)
     TYPE_24WORD = ButtonOption("Enter 24-word seed", FontAwesomeIconConstants.KEYBOARD, return_data=24)
-    LOADED_DESCRIPTOR = ButtonOption("Loaded Descriptor")
-    SATOCHIP = ButtonOption("Load from Satochip", SeedSignerIconConstants.FINGERPRINT)
     TYPE_ELECTRUM = ButtonOption("Electrum Seed", FontAwesomeIconConstants.KEYBOARD)
 
     def run(self):
@@ -1089,6 +1089,12 @@ class ToolsAddressExplorerSelectSourceView(View):
         if self.controller.multisig_wallet_descriptor:
             button_data.append(self.LOADED_DESCRIPTOR)
 
+        if (
+            self.settings.get_value(SettingsConstants.SETTING__SATOCHIP_SUPPORT)
+            == SettingsConstants.OPTION__ENABLED
+        ):
+            button_data.append(self.SATOCHIP)
+
         seed_lengths = self.settings.get_value(SettingsConstants.SETTING__SEED_WORD_LENGTHS)
         options = {
             12: self.TYPE_12WORD,
@@ -1098,11 +1104,6 @@ class ToolsAddressExplorerSelectSourceView(View):
             24: self.TYPE_24WORD,
         }
         button_data = button_data + [self.SCAN_SEED, self.SCAN_DESCRIPTOR]
-        if (
-            self.settings.get_value(SettingsConstants.SETTING__SATOCHIP_SUPPORT)
-            == SettingsConstants.OPTION__ENABLED
-        ):
-            button_data.append(self.SATOCHIP)
         button_data += [options[l] for l in seed_lengths]
         if self.settings.get_value(SettingsConstants.SETTING__ELECTRUM_SEEDS) == SettingsConstants.OPTION__ENABLED:
             button_data.append(self.TYPE_ELECTRUM)
