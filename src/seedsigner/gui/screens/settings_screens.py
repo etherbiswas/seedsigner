@@ -155,7 +155,7 @@ class IOTestScreen(BaseTopNavScreen):
         font = Fonts.get_font(GUIConstants.get_button_font_name(), GUIConstants.get_button_font_size())
         (left, top, text_width, bottom) = font.getbbox(text=_("Clear"), anchor="ls")
         icon = Icon(
-            icon_name=FontAwesomeIconConstants.CAMERA, 
+            icon_name=FontAwesomeIconConstants.CAMERA,
             icon_size=GUIConstants.ICON_INLINE_FONT_SIZE,
         )
         key_button_width = text_width + 2*GUIConstants.COMPONENT_PADDING + GUIConstants.EDGE_PADDING
@@ -322,7 +322,7 @@ class IOTestScreen(BaseTopNavScreen):
                     cur_selected_button.is_selected = False
                     cur_selected_button.render()
                     self.renderer.show_image()
-                
+
                 continue
 
             elif input == HardwareButtonsConstants.KEY3:
@@ -333,7 +333,7 @@ class IOTestScreen(BaseTopNavScreen):
                     cur_selected_button.render()
                     self.renderer.show_image()
                     return
-            
+
             elif input == HardwareButtonsConstants.KEY_PRESS:
                 cur_selected_button = self.joystick_click_button
 
@@ -360,30 +360,6 @@ class IOTestScreen(BaseTopNavScreen):
                 self.renderer.show_image()
 
             time.sleep(0.1)
-
-
-
-@dataclass
-class DonateScreen(BaseTopNavScreen):
-    def __post_init__(self):
-        self.title = _("Donate")
-        super().__post_init__()
-
-        self.components.append(TextArea(
-            # TRANSLATOR_NOTE: If your language uses the percent sign ("%"), your translation must also use two percent signs ("%%") due to python formatting oddities. "100%%" will be rendered as "100%".
-            text=_("SeedSigner is 100%% free & open source, funded solely by the Bitcoin community.\n\nDonate onchain or LN at:").replace("%%", "%"),
-            screen_y=self.top_nav.height + 3*GUIConstants.COMPONENT_PADDING,
-        ))
-
-        self.components.append(TextArea(
-            text="seedsigner.com",
-            font_name=GUIConstants.get_body_font_name(),
-            font_size=28,
-            font_color=GUIConstants.ACCENT_COLOR,
-            supersampling_factor=1,
-            screen_y=self.components[-1].screen_y + self.components[-1].height + GUIConstants.COMPONENT_PADDING
-        ))
-
 
 @dataclass
 class BatteryInfoScreen(BaseTopNavScreen):
@@ -576,7 +552,7 @@ class SettingsQRConfirmationScreen(ButtonListScreen):
             )
             self.components.append(self.config_name_textarea)
             start_y = self.config_name_textarea.screen_y + 50
-        
+
         self.components.append(TextArea(
             text=_(self.status_message),
             is_text_centered=True,
