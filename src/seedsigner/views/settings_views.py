@@ -25,7 +25,6 @@ class SettingsMenuView(View):
     SCARD_TEST = ButtonOption("Test Smartcard")
     LIST_READERS = ButtonOption("List card readers")
     NFC_TEST = ButtonOption("Test NFC Scan")
-    DONATE = ButtonOption("Donate")
     RESTART_PCSC = ButtonOption("Restart PCSC")
     BATTERY_INFO = ButtonOption("Battery info")
     SYSTEM_INFO = ButtonOption("System info")
@@ -73,7 +72,6 @@ class SettingsMenuView(View):
 
             if self.settings.get_value(SettingsConstants.SETTING__SMARTCARD_SUPPORT) == SettingsConstants.OPTION__ENABLED:
                 button_data.append(self.RESTART_PCSC)
-            button_data.append(self.DONATE)
 
         elif self.visibility == SettingsConstants.VISIBILITY__ADVANCED:
             title = _("Advanced")
@@ -120,7 +118,7 @@ class SettingsMenuView(View):
                 return Destination(SettingsMenuView)
             else:
                 return Destination(SettingsMenuView, view_args={"visibility": SettingsConstants.VISIBILITY__ADVANCED})
-        
+
         if button_data[selected_menu_num] == self.ADVANCED:
             return advanced_destination
 
@@ -132,7 +130,7 @@ class SettingsMenuView(View):
 
         elif button_data[selected_menu_num] == self.IO_TEST:
             return Destination(IOTestView)
-        
+
         elif button_data[selected_menu_num] == self.SCARD_TEST:
             return Destination(SCARDTestView)
 
@@ -144,9 +142,6 @@ class SettingsMenuView(View):
 
         elif button_data[selected_menu_num] == self.RESTART_PCSC:
             return Destination(RestartPCSCView)
-
-        elif button_data[selected_menu_num] == self.DONATE:
-            return Destination(DonateView)
 
         elif button_data[selected_menu_num] == self.BATTERY_INFO:
             return Destination(BatteryInfoView)
@@ -319,7 +314,7 @@ class SettingsEntryUpdateSelectionView(View):
 
             if self.selected_button is None:
                 self.selected_button = 0
-            
+
         ret_value = self.run_screen(
             settings_screens.SettingsEntryUpdateSelectionScreen,
             display_name=self.settings_entry.display_name,
@@ -400,7 +395,7 @@ class SettingsIngestSettingsQRView(View):
         changes_display_driver = (
             SettingsConstants.SETTING__DISPLAY_CONFIGURATION in settings_update_dict and
             self.settings.get_value(SettingsConstants.SETTING__DISPLAY_CONFIGURATION) != settings_update_dict[SettingsConstants.SETTING__DISPLAY_CONFIGURATION])
-            
+
         self.settings.update(settings_update_dict)
 
         if changes_display_driver:
@@ -446,7 +441,7 @@ class SCardReaderTestView(View):
         try:
 
             available_readers = readers()
-            
+
             if available_readers:
                 available_readers_text = '\n'.join(str(item)[:-5] for item in available_readers)
 
@@ -467,7 +462,7 @@ class SCardReaderTestView(View):
                         show_back_button=True,
                     )
                 return Destination(BackStackView)
-            
+
         except ListReadersException:
             self.run_screen(
                     WarningScreen,
@@ -487,12 +482,12 @@ class SCardReaderTestView(View):
                     show_back_button=True,
                 )
             return Destination(BackStackView)
-        
+
         return Destination(BackStackView)
 
 class SCARDTestView(View):
     def run(self):
-        
+
         from seedsigner.gui.screens.screen import LoadingScreenThread
         import os
         import time
@@ -552,7 +547,7 @@ class SCARDTestView(View):
                     show_back_button=True,
                 )
             return Destination(BackStackView)
-        
+
         except EstablishContextException:
             self.loading_screen.stop()
             self.run_screen(
@@ -563,12 +558,12 @@ class SCARDTestView(View):
                     show_back_button=True,
                 )
             return Destination(BackStackView)
-        
+
         return Destination(BackStackView)
 
 class NFCTestView(View):
     def run(self):
-        
+
         from seedsigner.gui.screens.screen import LoadingScreenThread
         import os
         import time
@@ -597,7 +592,7 @@ class NFCTestView(View):
                 show_back_button=True,
             )
             return Destination(BackStackView)
-            
+
         if nfc.initiator_init(nfcdevice) < 0:
             self.loading_screen.stop()
             print('ERROR: Unable to init NFC device.')
@@ -675,7 +670,7 @@ class NFCTestView(View):
 
         if "pn532" in scinterface:
             os.system("ifdnfc-activate yes") # Need to re-enable IFD-NFC if required...
-        
+
         return Destination(MainMenuView)
 
 class RestartPCSCView(View):
@@ -739,12 +734,6 @@ class RestartPCSCView(View):
             pass
 
         self.loading_screen.stop()
-
-        return Destination(SettingsMenuView)
-
-class DonateView(View):
-    def run(self):
-        self.run_screen(settings_screens.DonateScreen)
 
         return Destination(SettingsMenuView)
 
