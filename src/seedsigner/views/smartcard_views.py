@@ -55,12 +55,10 @@ logger = logging.getLogger(__name__)
 
 
 class ToolsSmartcardMenuView(View):
-    COMMON = ButtonOption("Common Functions")
-    SATOCHIP = ButtonOption("Satochip Functions")
-    KEYCARD = ButtonOption("KeyCard Functions")
-    SEEDKEEPER = ButtonOption("SeedKeeper Functions")
-    SPECTER_DIY = ButtonOption("Specter-DIY Functions")
-    Satochip_DIY = ButtonOption("DIY Tools")
+    COMMON = ButtonOption("Common Tools")
+    Javacard = ButtonOption("Javacard Tools")
+    SATOCHIP = ButtonOption("Satochip Tools")
+    SEEDKEEPER = ButtonOption("SeedKeeper Tools")
 
     def run(self):
         button_data = [self.COMMON, self.SEEDKEEPER]
@@ -68,21 +66,9 @@ class ToolsSmartcardMenuView(View):
             self.settings.get_value(SettingsConstants.SETTING__SATOCHIP_SUPPORT)
             == SettingsConstants.OPTION__ENABLED
         )
-        keycard_enabled = (
-            self.settings.get_value(SettingsConstants.SETTING__KEYCARD_SUPPORT)
-            == SettingsConstants.OPTION__ENABLED
-        )
-        specter_diy_enabled = (
-            self.settings.get_value(SettingsConstants.SETTING__SPECTER_DIY_SUPPORT)
-            == SettingsConstants.OPTION__ENABLED
-        )
         if satochip_enabled:
             button_data.append(self.SATOCHIP)
-        if keycard_enabled:
-            button_data.append(self.KEYCARD)
-        if specter_diy_enabled:
-            button_data.append(self.SPECTER_DIY)
-        button_data.append(self.Satochip_DIY)
+        button_data.append(self.Javacard)
 
         selected_menu_num = self.run_screen(
             ButtonListScreen,
@@ -97,23 +83,16 @@ class ToolsSmartcardMenuView(View):
         elif button_data[selected_menu_num] == self.COMMON:
             self.controller.smartcard_backend_preference = None
             return Destination(ToolsCommonView)
-        
+
         elif button_data[selected_menu_num] == self.SATOCHIP:
             self.controller.smartcard_backend_preference = None
             return Destination(ToolsSatochipView)
 
-        elif button_data[selected_menu_num] == self.KEYCARD:
-            self.controller.smartcard_backend_preference = "keycard"
-            return Destination(ToolsKeycardView)
-        
         elif button_data[selected_menu_num] == self.SEEDKEEPER:
             self.controller.smartcard_backend_preference = None
             return Destination(ToolsSeedkeeperView)
 
-        elif button_data[selected_menu_num] == self.SPECTER_DIY:
-            return Destination(ToolsSpecterDIYView)
-
-        elif button_data[selected_menu_num] == self.Satochip_DIY:
+        elif button_data[selected_menu_num] == self.Javacard:
             self.controller.smartcard_backend_preference = None
             return Destination(ToolsSatochipDIYView)
 
@@ -161,7 +140,7 @@ class ToolsCommonView(View):
 
         elif button_data[selected_menu_num] == self.CHANGE_PIN:
             return Destination(ToolsSatochipChangePinView)
-        
+
         elif button_data[selected_menu_num] == self.CHANGE_LABEL:
             return Destination(ToolsSatochipChangeLabelView)
 
@@ -293,10 +272,10 @@ class ToolsCommonNdefView(View):
 
             if selected == self.SET_CUSTOM_NDEF:
                 return self._set_custom_ndef_flow(connector)
-            
+
             if selected == self.SAVE_NDEF_TO_SEEDKEEPER:
                 return self._save_ndef_to_seedkeeper(connector)
-            
+
             if selected == self.LOAD_NDEF_FROM_SEEDKEEPER:
                 return self._load_ndef_from_seedkeeper(connector)
 
@@ -460,7 +439,7 @@ class ToolsCommonNdefView(View):
     def _view_ndef(self, connector):
         try:
             card_type = getattr(connector, "card_type", "Unknown")
-            
+
             # Auto-detect card type and use appropriate method
             if card_type == "Satodime":
                 # Use card_get_ndef_v2 for Satodime to get policy data
@@ -564,12 +543,12 @@ class ToolsCommonNdefView(View):
     def _save_ndef_to_seedkeeper(self, connector):
         """Save current NDEF from card to SeedKeeper."""
         from seedsigner.gui.screens.screen import LoadingScreenThread
-        
+
         loading_screen = None
         try:
             # First, get the current NDEF from the card
             card_type = getattr(connector, "card_type", "Unknown")
-            
+
             # Check that we're connected to Seedkeeper
             if card_type != "Seedkeeper":
                 self.run_screen(
@@ -580,7 +559,7 @@ class ToolsCommonNdefView(View):
                     show_back_button=True,
                 )
                 return Destination(self.__class__)
-            
+
             if card_type == "Satodime":
                 result = connector.card_get_ndef_v2()
                 if len(result) == 5:
@@ -589,10 +568,10 @@ class ToolsCommonNdefView(View):
                     _, sw1, sw2, ndef_bytes = result[:4]
             else:
                 _, sw1, sw2, ndef_bytes = connector.card_get_ndef()
-            
+
             if sw1 != 0x90 or sw2 != 0x00:
                 raise RuntimeError(format_sw_error(sw1, sw2))
-            
+
             if not ndef_bytes or len(ndef_bytes) == 0:
                 self.run_screen(
                     WarningScreen,
@@ -602,30 +581,30 @@ class ToolsCommonNdefView(View):
                     show_back_button=True,
                 )
                 return Destination(self.__class__)
-            
+
             # Prompt user for a label
             ret = seed_screens.SeedAddPassphraseScreen(
                 title="Save NDEF Label",
                 is_button_text_centered=True,
             ).display()
-            
+
             if isinstance(ret, dict) and "is_back_button" in ret:
                 return Destination(self.__class__)
-            
+
             label = ret.get("passphrase", "NDEF Record").strip()
             if not label:
                 label = "NDEF Record"
-            
+
             # Create secret_list for capacity check
             if len(ndef_bytes) <= 255:
                 secret_list = [len(ndef_bytes)] + list(ndef_bytes)
             else:
                 secret_list = list(len(ndef_bytes).to_bytes(2, "big")) + list(ndef_bytes)
-            
+
             # Create header for capacity check
             header = connector.make_header("Password", "Plaintext export allowed", f"NDEF_{label}")
             secret_dic = {"header": header, "secret_list": secret_list}
-            
+
             # Check capacity before saving
             try:
                 fits, required_bytes, free_bytes = seedkeeper_utils.ensure_seedkeeper_capacity(
@@ -640,7 +619,7 @@ class ToolsCommonNdefView(View):
                     show_back_button=True,
                 )
                 return Destination(self.__class__)
-            
+
             if not fits:
                 self.run_screen(
                     WarningScreen,
@@ -650,17 +629,17 @@ class ToolsCommonNdefView(View):
                     show_back_button=True,
                 )
                 return Destination(self.__class__)
-            
+
             # Save to SeedKeeper
             loading_screen = LoadingScreenThread(text="Saving NDEF to\nSeedKeeper\n\n\n\n")
             loading_screen.start()
-            
+
             (sid, fingerprint) = ndef_helper.save_ndef_to_seedkeeper(
                 connector, ndef_bytes, label
             )
-            
+
             loading_screen.stop()
-            
+
             self.run_screen(
                 LargeIconStatusScreen,
                 title="Success",
@@ -669,7 +648,7 @@ class ToolsCommonNdefView(View):
                 show_back_button=False,
             )
             return Destination(self.__class__)
-        
+
         except Exception as e:
             logger.exception("Save NDEF to SeedKeeper failed")
             if loading_screen:
@@ -686,11 +665,11 @@ class ToolsCommonNdefView(View):
     def _load_ndef_from_seedkeeper(self, connector):
         """Load NDEF from SeedKeeper and set it on the card."""
         from seedsigner.gui.screens.screen import LoadingScreenThread
-        
+
         loading_screen = None
         try:
             card_type = getattr(connector, "card_type", "Unknown")
-            
+
             # Check that we're connected to Seedkeeper to load from it
             if card_type != "Seedkeeper":
                 self.run_screen(
@@ -701,22 +680,22 @@ class ToolsCommonNdefView(View):
                     show_back_button=True,
                 )
                 return Destination(self.__class__)
-            
+
             # Get list of NDEF secrets from SeedKeeper
             loading_screen = LoadingScreenThread(text="Reading SeedKeeper\nSecrets\n\n\n\n")
             loading_screen.start()
-            
+
             (response, sw1, sw2, headers) = connector.seedkeeper_list_secrets()
-            
+
             loading_screen.stop()
             loading_screen = None
-            
+
             if sw1 != 0x90 or sw2 != 0x00:
                 raise RuntimeError(format_sw_error(sw1, sw2))
-            
+
             # Filter for NDEF_ secrets
             ndef_secrets = [h for h in headers if h.get("label", "").startswith("NDEF_")]
-            
+
             if not ndef_secrets:
                 self.run_screen(
                     WarningScreen,
@@ -726,13 +705,13 @@ class ToolsCommonNdefView(View):
                     show_back_button=True,
                 )
                 return Destination(self.__class__)
-            
+
             # Create button list for selection
             button_data = [
                 ButtonOption(h.get("label", f"Secret {h['id']}"))
                 for h in ndef_secrets
             ]
-            
+
             selected_num = self.run_screen(
                 ButtonListScreen,
                 title="Select NDEF",
@@ -740,26 +719,26 @@ class ToolsCommonNdefView(View):
                 button_data=button_data,
                 show_back_button=True,
             )
-            
+
             if selected_num == RET_CODE__BACK_BUTTON:
                 return Destination(self.__class__)
-            
+
             selected_secret = ndef_secrets[selected_num]
             secret_id = selected_secret["id"]
-            
+
             # Load the secret
             loading_screen = LoadingScreenThread(text="Loading NDEF\nfrom SeedKeeper\n\n\n\n")
             loading_screen.start()
-            
+
             ndef_bytes = ndef_helper.load_ndef_from_seedkeeper(connector, secret_id)
-            
+
             loading_screen.stop()
             loading_screen = None
-            
+
             # Convert to hex and set on card
             ndef_hex = ndef_bytes.hex().upper()
             return self._set_ndef(connector, ndef_hex, "NDEF loaded and set")
-        
+
         except Exception as e:
             logger.exception("Load NDEF from SeedKeeper failed")
             if loading_screen:
@@ -953,9 +932,9 @@ class ToolsSatochipChangePinView(View):
                 text=f"Invalid PIN entered, select another and try again.",
                 show_back_button=True,
             )
-        
+
         return Destination(MainMenuView)
-    
+
 class ToolsSatochipChangeNFCView(View):
     def run(self):
 
@@ -982,7 +961,7 @@ class ToolsSatochipChangeNFCView(View):
         if nfc_policy == RET_CODE__BACK_BUTTON:
             return Destination(BackStackView)
 
-        logger.info("Selected" + str(button_data[nfc_policy]) + " " + str(nfc_policy))    
+        logger.info("Selected" + str(button_data[nfc_policy]) + " " + str(nfc_policy))
 
         if (nfc_policy == 2):
             ret = self.run_screen(
@@ -994,7 +973,7 @@ class ToolsSatochipChangeNFCView(View):
             )
             if ret == RET_CODE__BACK_BUTTON:
                 return Destination(BackStackView)
-        
+
         (response, sw1, sw2) = Satochip_Connector.card_set_nfc_policy(nfc_policy)
 
         if sw1 == 0x90 and sw2 == 0x00:
@@ -1007,7 +986,7 @@ class ToolsSatochipChangeNFCView(View):
                 show_back_button=False,
             )
             return Destination(MainMenuView)
-    
+
         else:
             error_messages = {
                 0x9C48: "Cannot set the NFC policy through the NFC interface, use contact interface instead",
@@ -1050,7 +1029,7 @@ class ToolsSatochipFactoryResetView(View):
         SeedKeeper: all versions support factory reset
         Satodime: no factory reset support (simply reset all vaults on the card)
         Satochip: factory reset introduced in v0.12-0.4
-        
+
         new version currently only implemented on SeedKeeper v0.2 and higher
         """
         allowed = ["satochip", "seedkeeper"]
@@ -1069,10 +1048,10 @@ class ToolsSatochipFactoryResetView(View):
             if (version >= 2):
                 print("This SeedKeeper supports factory reset (new version)!")
                 resetStatus = self.common_reset_factory_new(Satochip_Connector)
-            else: 
+            else:
                 print("This SeedKeeper supports factory reset (legacy)!")
                 resetStatus = self.common_reset_factory_legacy(Satochip_Connector)
-        
+
         elif Satochip_Connector.card_type == "Satodime":
             print("Satodime does not support factory reset!")
 
@@ -1086,7 +1065,7 @@ class ToolsSatochipFactoryResetView(View):
             version_min = (12<<16)+4 # v0.12-0.4
             if (version >= version_min):
                 print("This Satochip supports factory reset (legacy)!")
-                resetStatus = self.common_reset_factory_legacy(Satochip_Connector) 
+                resetStatus = self.common_reset_factory_legacy(Satochip_Connector)
             else:
                 print("Satochip below version v0.12-0.4 do not support factory reset!")
                 ret = self.run_screen(
@@ -1125,12 +1104,12 @@ class ToolsSatochipFactoryResetView(View):
             )
 
         return Destination(BackStackView)
-        
+
     def common_reset_factory_legacy(self, Satochip_Connector):
         from seedsigner.gui.screens.screen import LoadingScreenThread
         """Initiate the Factory Reset Process
         Legacy approach based on sending a specifi APDU a certain number of times
-        """    
+        """
 
         resetStatus = False
 
@@ -1315,7 +1294,7 @@ class ToolsSatochipFactoryResetView(View):
         from pysatochip.CardConnector import IdentityBlockedError, WrongPinError, CardResetToFactoryError
         """Initiate the Factory Reset Process
         New approach where reset to factory is trigerred when PIN and PUK is blocked (the card is basically unusable in this state)
-        """ 
+        """
         logger.info("In common_reset_factory_new")
         resetStatus = False
 
@@ -1332,7 +1311,7 @@ class ToolsSatochipFactoryResetView(View):
             return resetStatus
         else:
             doReset = True
-        
+
         # Block PIN
         remaining_string = ""
         while(doReset):
@@ -1390,9 +1369,9 @@ class ToolsSatochipFactoryResetView(View):
 
             if "is_back_button" in puk:
                 return resetStatus
-            
+
             puk = puk['passphrase']
-            
+
             puk_list = list(puk.encode('utf-8'))
             if len(puk_list)<4:
                 print("PUK code too short, factory reset is aborted")
@@ -1426,8 +1405,8 @@ class ToolsSatochipFactoryResetView(View):
                 pukRemaining = -1
                 print(f"CARD RESET TO FACTORY!")
                 resetStatus = True
-                break    
-            
+                break
+
         return resetStatus
 
 class ToolsSatochipChangeLabelView(View):
@@ -1522,7 +1501,7 @@ class ToolsSeedkeeperView(View):
 
         elif button_data[selected_menu_num] == self.LOAD_DESCRIPTOR:
             return Destination(ToolsSeedkeeperLoadDescriptorView)
-        
+
         elif button_data[selected_menu_num] == self.SAVE_DESCRIPTOR:
             return Destination(ToolsSeedkeeperSaveDescriptorView)
 
@@ -1881,7 +1860,7 @@ class ToolsSeedkeeperViewSecretsView(View):
         from seedsigner.gui.screens.screen import LoadingScreenThread
         try:
             Satochip_Connector = seedkeeper_utils.init_satochip(self, init_card_filter=["seedkeeper"])
-            
+
             if not Satochip_Connector:
                 return Destination(BackStackView)
 
@@ -1911,7 +1890,7 @@ class ToolsSeedkeeperViewSecretsView(View):
                     label = "Descriptor:" + header['label']
                 elif stype == "Data":
                     label = "Data:" + header['label']
-                else: 
+                else:
                     label = header['label']
                 origin = SEEDKEEPER_DIC_ORIGIN.get(header['origin'], hex(header['origin']))  # hex(header['origin'])
                 export_rights = SEEDKEEPER_DIC_EXPORT_RIGHTS.get(header['export_rights'],
@@ -1935,7 +1914,7 @@ class ToolsSeedkeeperViewSecretsView(View):
                 status_headline=None,
                 text=f"No Secrets to Load from Seedkeeper",
                 show_back_button=False,
-                )   
+                )
                 return Destination(BackStackView)
 
             selected_menu_num = self.run_screen(
@@ -1976,7 +1955,7 @@ class ToolsSeedkeeperViewSecretsView(View):
                 # mnemonic in compressed format using entropy (16-32 bytes)
                 secret_raw_hex = secret_dict['secret']
                 secret_raw_bytes = bytes.fromhex(secret_raw_hex)
-                
+
                 offset = 0
                 masterseed_size = secret_raw_bytes[offset]
                 offset+=1
@@ -1991,7 +1970,7 @@ class ToolsSeedkeeperViewSecretsView(View):
                 if wordlist is None:
                     logger.info("Error: unsupported BIP39 wordlist identifier encountered")
                     exit()
-                
+
                 entropy_size = secret_raw_bytes[offset]
                 offset+=1
 
@@ -2015,10 +1994,10 @@ class ToolsSeedkeeperViewSecretsView(View):
                     logger.info(f"Error during passphrase decoding: {ex}")
                     passphrase = f"failed to decode passphrase bytes: {passphrase_bytes.hex()}"
 
-                secret_dict['secret']= f'BIP39 mnemonic: "{bip39_mnemonic}" \nPassphrase: "{passphrase}"'  
+                secret_dict['secret']= f'BIP39 mnemonic: "{bip39_mnemonic}" \nPassphrase: "{passphrase}"'
 
             elif stype == 'Password':
-                
+
                 password_length = secret_dict['secret_list'][0]
                 try:
                     login_length = secret_dict['secret_list'][password_length + 1]
@@ -2047,7 +2026,7 @@ class ToolsSeedkeeperViewSecretsView(View):
 
             elif stype in ('Descriptor', 'Data', 'Public Key'):
                 secret_dict['secret'] = unhexlify(secret_dict['secret'])[2:].decode()
-                
+
             else:
                 secret_dict['secret'] =  secret_dict['secret'][2:]
 
@@ -2075,7 +2054,7 @@ class ToolsSeedkeeperViewSecretsView(View):
                 )
 
             return Destination(BackStackView)
-            
+
         except Exception as e:
             logger.info(e)
             self.loading_screen.stop()
@@ -2119,7 +2098,7 @@ class ToolsSeedkeeperImportPasswordView(View):
         Satochip_Connector = seedkeeper_utils.init_satochip(self, init_card_filter=["seedkeeper"])
         if not Satochip_Connector:
             return Destination(BackStackView)
-        
+
         header = Satochip_Connector.make_header("Password", "Plaintext export allowed", secret_label['passphrase'])
         secret_text_list = list(bytes(secret_text['passphrase'], 'utf-8'))
         secret_list = [len(secret_text_list)] + secret_text_list
@@ -2176,7 +2155,7 @@ class ToolsSeedkeeperImportPasswordView(View):
                 text=f"Password Import Failed",
                 show_back_button=False,
             )
-        
+
         return Destination(BackStackView)
 
 class ToolsSeedkeeperDeleteSecretView(View):
@@ -2185,7 +2164,7 @@ class ToolsSeedkeeperDeleteSecretView(View):
         from seedsigner.gui.screens.screen import LoadingScreenThread
         try:
             Satochip_Connector = seedkeeper_utils.init_satochip(self, init_card_filter=["seedkeeper"])
-            
+
             if not Satochip_Connector:
                 return Destination(BackStackView)
 
@@ -2220,7 +2199,7 @@ class ToolsSeedkeeperDeleteSecretView(View):
                     label = "Descriptor:" + header['label']
                 elif stype == "Data":
                     label = "Data:" + header['label']
-                else: 
+                else:
                     label = header['label']
                 origin = SEEDKEEPER_DIC_ORIGIN.get(header['origin'], hex(header['origin']))  # hex(header['origin'])
                 export_rights = SEEDKEEPER_DIC_EXPORT_RIGHTS.get(header['export_rights'],
@@ -2244,7 +2223,7 @@ class ToolsSeedkeeperDeleteSecretView(View):
                 status_headline=None,
                 text=f"No Secrets to Load from Seedkeeper",
                 show_back_button=False,
-                )   
+                )
                 return Destination(BackStackView)
 
             selected_menu_num = self.run_screen(
@@ -2278,7 +2257,7 @@ class ToolsSeedkeeperDeleteSecretView(View):
             ).display()
 
             return Destination(BackStackView)
-            
+
         except Exception as e:
             logger.info(e)
             self.loading_screen.stop()
@@ -2297,7 +2276,7 @@ class ToolsSeedkeeperLoadDescriptorView(View):
         from seedsigner.views.seed_views import MultisigWalletDescriptorView
         try:
             Satochip_Connector = seedkeeper_utils.init_satochip(self, init_card_filter=["seedkeeper"])
-            
+
             if not Satochip_Connector:
                 return Destination(BackStackView)
 
@@ -2333,7 +2312,7 @@ class ToolsSeedkeeperLoadDescriptorView(View):
                         xpub_secrets.append((sid, label))
 
                     # Check for Seedkeeper V2 Style Descriptors
-                    if stype == "Descriptor": 
+                    if stype == "Descriptor":
                         multisig_descriptor_secrets.append((sid, label))
                         button_data.append(ButtonOption(label))
 
@@ -2349,7 +2328,7 @@ class ToolsSeedkeeperLoadDescriptorView(View):
                 status_headline=None,
                 text=f"No Multisig Descriptors to Load from Seedkeeper",
                 show_back_button=False,
-                )   
+                )
                 return Destination(BackStackView)
 
             selected_menu_num = self.run_screen(
@@ -2362,7 +2341,7 @@ class ToolsSeedkeeperLoadDescriptorView(View):
 
             if selected_menu_num == RET_CODE__BACK_BUTTON:
                 return Destination(BackStackView)
-            
+
             self.loading_screen = LoadingScreenThread(text="Loading Descriptor\n\n\n\n\n\n")
             self.loading_screen.start()
 
@@ -2370,7 +2349,7 @@ class ToolsSeedkeeperLoadDescriptorView(View):
 
             stype = SEEDKEEPER_DIC_TYPE.get(secret_dict['type'], hex(secret_dict['type']))  # hex(header['type'])
 
-            if stype == "Descriptor": # Seedkeeper V2 
+            if stype == "Descriptor": # Seedkeeper V2
                 secret_template = unhexlify(secret_dict['secret'])[2:].decode()
             else:
                 secret_dict['secret'] = unhexlify(secret_dict['secret'])[1:].decode()
@@ -2382,7 +2361,7 @@ class ToolsSeedkeeperLoadDescriptorView(View):
                         secret_dict = Satochip_Connector.seedkeeper_export_secret(xpub_secret_id, None)
                         secret_dict['secret'] = unhexlify(secret_dict['secret'])[1:].decode()
                         secret_template = secret_template.replace(xpub_secret_label, secret_dict['secret'])
-                
+
             # Depending on where the descriptor came from when imported into the SeedKeeper, it may need some characters swapped to work with Embit
             secret_template = secret_template.replace("<","{").replace(">","}").replace(";",",")
 
@@ -2391,11 +2370,11 @@ class ToolsSeedkeeperLoadDescriptorView(View):
             secret_template = embit_utils.normalize_descriptor_str(secret_template)
 
             self.controller.multisig_wallet_descriptor = Descriptor.from_string(secret_template)
-            
+
             self.loading_screen.stop()
 
             return Destination(MultisigWalletDescriptorView, skip_current_view=True)
-            
+
 
         except Exception as e:
             self.loading_screen.stop()
@@ -2426,7 +2405,7 @@ class ToolsSeedkeeperSaveDescriptorView(View):
                     text="Nothing to save...",
                     show_back_button=True,
                 )
-        
+
                 return Destination(BackStackView)
 
             # Break up the descriptor for efficient storage on SeedKeeper Cards
@@ -2445,7 +2424,7 @@ class ToolsSeedkeeperSaveDescriptorView(View):
 
             if not Satochip_Connector:
                 return Destination(BackStackView)
-            
+
             self.loading_screen = LoadingScreenThread(text="Saving Secrets\n\n\n\n\n\n")
             self.loading_screen.start()
 
@@ -2461,12 +2440,12 @@ class ToolsSeedkeeperSaveDescriptorView(View):
                 for key in descriptor.keys:
                     key_string = key.to_string()
                     key_name = "xpub_" + hexlify(key.fingerprint).decode()
-                    
+
                     descriptor_string = descriptor_string.replace(key_string, key_name)
                     key_strings.append((key_name, key_string))
 
                 key_strings.append(("msig_desc_" + ret['passphrase'], descriptor_string))
-            
+
             else: # For Seedkeeper V2, we can just store the whole descriptor as-is
                 secret_type = "Descriptor"
                 key_strings.append((ret['passphrase'], descriptor_string))
@@ -2499,7 +2478,7 @@ class ToolsSeedkeeperSaveDescriptorView(View):
                         xpub_labels.append(ButtonOption(label))
 
                     # Check for Seedkeeper V2 Style Descriptors
-                    if stype == "Descriptor": 
+                    if stype == "Descriptor":
                         multisig_descriptor_secrets.append((sid, label))
 
             logger.debug("Found %d multisig descriptor secrets", len(multisig_descriptor_secrets))
@@ -2583,7 +2562,7 @@ class ToolsSeedkeeperSaveDescriptorView(View):
                 text=str(e),
                 show_back_button=True,
             )
-        
+
         return Destination(BackStackView)
 
 class ToolsSatochipView(View):
@@ -3536,7 +3515,7 @@ class ToolsSatochipImportSeedView(View):
         for seed in seeds:
             button_str = seed.get_fingerprint(self.settings.get_value(SettingsConstants.SETTING__NETWORK))
             button_data.append(ButtonOption(button_str, SeedSignerIconConstants.FINGERPRINT))
-        
+
         seed_lengths = self.settings.get_value(SettingsConstants.SETTING__SEED_WORD_LENGTHS)
         options = {
             12: self.TYPE_12WORD,
@@ -3553,7 +3532,7 @@ class ToolsSatochipImportSeedView(View):
         button_data.append(self.CREATE)
         if self.settings.get_value(SettingsConstants.SETTING__ELECTRUM_SEEDS) == SettingsConstants.OPTION__ENABLED:
             button_data.append(self.TYPE_ELECTRUM)
-        
+
         selected_menu_num = self.run_screen(
             ButtonListScreen,
             title="Seed to Import",
@@ -3567,7 +3546,7 @@ class ToolsSatochipImportSeedView(View):
 
         # Most of the options require us to go through a side flow(s) before we can
         # continue to the address explorer. Set the Controller-level flow so that it
-        # knows to re-route us once the side flow is complete.        
+        # knows to re-route us once the side flow is complete.
         self.controller.resume_main_flow = self.controller.FLOW__SATOCHIP_IMPORT_SEED
 
         if len(seeds) > 0 and selected_menu_num < len(seeds):
@@ -3645,7 +3624,7 @@ class ToolsSatochipImportSeedView(View):
             return Destination(ToolsMenuView, view_args={"include_password_generator": False})
         elif button_data[selected_menu_num] == self.TYPE_ELECTRUM:
             return Destination(SeedElectrumMnemonicStartView)
-        
+
         return Destination(MainMenuView)
 
 class ToolsSatochipEnable2FAView(View):
@@ -3661,7 +3640,7 @@ class ToolsSatochipEnable2FAView(View):
 
         if not Satochip_Connector:
             return Destination(BackStackView)
-        
+
         try:
             self.run_screen(
                 WarningScreen,
@@ -4525,7 +4504,7 @@ class ToolsSatochipDIYView(View):
 
         selected_menu_num = self.run_screen(
             ButtonListScreen,
-            title="Javacard DIY",
+            title="Javacard Tools",
             is_button_text_centered=False,
             button_data=button_data
         )
@@ -5620,7 +5599,7 @@ class ToolsJavacardUnlockCardView(View):
             import pygp
             pygp.terminal()
             pygp.card()
-            
+
             # Get the actual keys based on key type (single vs set)
             if keys.get("type") == "single":
                 enc_key = keys.get('key')
@@ -5630,7 +5609,7 @@ class ToolsJavacardUnlockCardView(View):
                 enc_key = keys.get('enc')
                 mac_key = keys.get('mac')
                 dek_key = keys.get('dek')
-            
+
             # Validate keys
             for key_name, key_value in [('enc', enc_key), ('mac', mac_key), ('dek', dek_key)]:
                 if not key_value:
@@ -5642,7 +5621,7 @@ class ToolsJavacardUnlockCardView(View):
                     int(key_value, 16)
                 except ValueError:
                     raise ValueError(f"Key {key_name} contains invalid hex characters")
-            
+
             # Unlock: authenticate with the LOADED keys and set back to DEFAULT
             pygp.auth(enc_key=enc_key, mac_key=mac_key, dek_key=dek_key, keysetversion="00", securitylevel=pygp.SECURITY_LEVEL_C_DEC_C_MAC)
             DEFAULT_GP_KEY = "404142434445464748494A4B4C4D4E4F"
@@ -5693,7 +5672,7 @@ class ToolsJavacardLockCardView(View):
             import pygp
             pygp.terminal()
             pygp.card()
-            
+
             # Get the actual keys based on key type (single vs set)
             if keys.get("type") == "single":
                 enc_key = keys.get('key')
@@ -5703,7 +5682,7 @@ class ToolsJavacardLockCardView(View):
                 enc_key = keys.get('enc')
                 mac_key = keys.get('mac')
                 dek_key = keys.get('dek')
-            
+
             # Validate keys
             for key_name, key_value in [('enc', enc_key), ('mac', mac_key), ('dek', dek_key)]:
                 if not key_value:
@@ -5715,7 +5694,7 @@ class ToolsJavacardLockCardView(View):
                     int(key_value, 16)
                 except ValueError:
                     raise ValueError(f"Key {key_name} contains invalid hex characters")
-            
+
             # Lock: authenticate with DEFAULT keys and set to the LOADED keys
             DEFAULT_GP_KEY = "404142434445464748494A4B4C4D4E4F"
             pygp.auth(enc_key=DEFAULT_GP_KEY, mac_key=DEFAULT_GP_KEY, dek_key=DEFAULT_GP_KEY, keysetversion="00", securitylevel=pygp.SECURITY_LEVEL_C_DEC_C_MAC)
@@ -5950,7 +5929,7 @@ class ToolsDIYInstallAppletView(View):
             import pygp
             pygp.terminal()
             pygp.card()
-            
+
             # Always establish secure channel, using provided keys or default test key
             DEFAULT_GP_KEY = "404142434445464748494A4B4C4D4E4F"
             try:
@@ -5967,11 +5946,11 @@ class ToolsDIYInstallAppletView(View):
                     logger.info("Card authentication successful with default key")
             except Exception as e:
                 logger.warning(f"Card authentication failed: {str(e)}, attempting install anyway")
-            
+
             cap_path = f"{cap_dir}/{applet_file}"
-            
+
             ndef_conflict_detected = False
-            
+
             try:
                 if "smartpgp" in applet_file.lower():
                     serial_hex = secrets.token_bytes(4).hex().upper()
@@ -5985,7 +5964,7 @@ class ToolsDIYInstallAppletView(View):
                 else:
                     result = pygp.install_capfile(cap_path)
                     success_text = "Applet Installed"
-                
+
                 # Handle both old return format (list) and new format (dict)
                 if isinstance(result, dict):
                     ndef_conflict_detected = result.get('ndef_skipped', False)
@@ -5995,9 +5974,9 @@ class ToolsDIYInstallAppletView(View):
             except Exception as e:
                 # Re-raise to be caught by outer exception handler
                 raise
-                
+
             self.loading_screen.stop()
-            
+
             # Inform user if PyGP reported NDEF conflict handling
             if ndef_conflict_detected:
                 self.run_screen(
@@ -6007,9 +5986,9 @@ class ToolsDIYInstallAppletView(View):
                     text="NDEF applet was automatically skipped to avoid conflicts.",
                     show_back_button=False,
                 )
-            
+
             self.run_screen(LargeIconStatusScreen, title="Success", status_headline=None, text=success_text, show_back_button=False)
-            
+
         except Exception as e:
             self.loading_screen.stop()
             error_msg = seedkeeper_utils.pygp_format_error(e)[:100]
@@ -6052,15 +6031,15 @@ class ToolsDIYUninstallAppletView(View):
 
         self.loading_screen = LoadingScreenThread(text="Checking Installed Applets")
         self.loading_screen.start()
-        
+
         package_aids = None
         error_message = None
-        
+
         try:
             import pygp
             pygp.terminal()
             pygp.card()
-            
+
             # Always try to establish secure channel first, like the CLI does
             # This is required for get_status() to return the full package list
             # Use provided keys or fall back to default test key
@@ -6081,7 +6060,7 @@ class ToolsDIYUninstallAppletView(View):
                 # Authentication failed - log warning but continue
                 # Some operations might still work without secure channel
                 logger.warning(f"Card authentication failed: {str(e)}, attempting to list packages anyway")
-            
+
             try:
                 # Get the list of loaded package AIDs from pygp (public API)
                 # Note: This requires secure channel to be established (via auth above)
@@ -6109,24 +6088,24 @@ class ToolsDIYUninstallAppletView(View):
             except Exception as e:
                 module_map = {}
                 logger.warning(f"Could not get module map: {str(e)}")
-            
+
             # Also get installed applications to verify NDEF is actually instantiated
             try:
                 installed_apps = pygp.get_installed_application_aids()
             except Exception as e:
                 installed_apps = []
                 logger.warning(f"Could not get installed apps: {str(e)}")
-            
+
             # The NDEF application AID (the actual instantiated app)
             NDEF_APP_AID = 'D2760000850101'
             ndef_is_active = NDEF_APP_AID in [aid.upper() for aid in installed_apps]
-            
+
             # Known NDEF module AIDs - mark packages containing these with "+NDEF"
             ndef_module_aids = (
                 'A000000804000102',      # Keycard NDEF
                 '536565644B656570657201', # SeedKeeper NDEF
             )
-            
+
             # If NDEF is active, identify all packages containing NDEF modules
             packages_with_ndef = set()
             if ndef_is_active:
@@ -6139,12 +6118,12 @@ class ToolsDIYUninstallAppletView(View):
                 # Ignore system packages
                 if aid in ['A0000001515350', 'A00000016443446F634C697465', 'A0000000620204', 'A0000000620202','D00000000002','4B4D313031']:
                     continue
-                
+
                 name = aid
                 if aid == 'A00000052721010141504558': name="Apex TOTP"
                 if aid == 'D27600012401': name="SmartPGP"
                 if aid == 'B00B5111CB': name="SpecterDIY"
-                if aid == 'A0000008040001': 
+                if aid == 'A0000008040001':
                     name="Keycard"
                     # Show "+NDEF" if this package contains NDEF modules and NDEF is active
                     if aid.upper() in packages_with_ndef:
@@ -6154,12 +6133,12 @@ class ToolsDIYUninstallAppletView(View):
                 if aid == 'A000000804000102': name="Keycard NDEF"
                 if aid == 'A000000804000103': name="Keycard Cash"
                 if aid == 'A000000804000104': name="Keycard Ident"
-                if aid == '536565644B6565706572': 
+                if aid == '536565644B6565706572':
                     name="SeedKeeper"
                     # Show "+NDEF" if this package contains NDEF modules and NDEF is active
                     if aid.upper() in packages_with_ndef:
                         name = "SeedKeeper+NDEF"
-                if aid == '536565644B656570657200': 
+                if aid == '536565644B656570657200':
                     name="SeedKeeper"
                     # Show "+NDEF" if this package contains NDEF modules and NDEF is active
                     if aid.upper() in packages_with_ndef:
@@ -6189,7 +6168,7 @@ class ToolsDIYUninstallAppletView(View):
                 try:
                     pygp.terminal()
                     pygp.card()
-                    
+
                     # Always establish secure channel for delete operations
                     DEFAULT_GP_KEY = "404142434445464748494A4B4C4D4E4F"
                     try:
@@ -6206,7 +6185,7 @@ class ToolsDIYUninstallAppletView(View):
                             logger.info("Card authentication successful with default key")
                     except Exception as e:
                         logger.warning(f"Card authentication failed: {str(e)}, attempting delete anyway")
-                    
+
                     pygp.delete_package(applet_aid)
                     self.loading_screen.stop()
                     self.run_screen(
@@ -6295,7 +6274,7 @@ class ToolsMicroSDMenuView(View):
 
         elif button_data[selected_menu_num] == self.WIPE_RANDOM:
             return Destination(ToolsMicroSDWipeRandomView)
-        
+
 class ToolsMicroSDFlashView(View):
     def run(self):
         from subprocess import run
@@ -6426,7 +6405,7 @@ class ToolsMicroSDFlashView(View):
                 )
 
                 if ret == 0:
-                    return Destination(ToolsMicroSDVerifyView) 
+                    return Destination(ToolsMicroSDVerifyView)
                 else:
                     return Destination(MainMenuView)
 
@@ -6517,7 +6496,7 @@ class ToolsMicroSDVerifyView(View):
             )
 
         return Destination(MainMenuView)
-    
+
 class ToolsMicroSDWipeZeroView(View):
     WIPE_64MB = ButtonOption("64MB")
     WIPE_256MB = ButtonOption("256MB")
@@ -6541,10 +6520,10 @@ class ToolsMicroSDWipeZeroView(View):
                 show_back_button=True,
                 button_data=button_data,
             )
-        
+
         if wipe_selection == RET_CODE__BACK_BUTTON:
             return Destination(BackStackView)
-        
+
         wipesize_cmd_string = "" # Default to wiping the whole card
         if button_data[wipe_selection] == self.WIPE_64MB:
             wipesize_cmd_string = " count=64"
@@ -6643,10 +6622,10 @@ class ToolsMicroSDWipeRandomView(View):
                 show_back_button=True,
                 button_data=button_data,
             )
-        
+
         if wipe_selection == RET_CODE__BACK_BUTTON:
             return Destination(BackStackView)
-        
+
         wipesize_cmd_string = "" # Default to wiping the whole card
         if button_data[wipe_selection] == self.WIPE_64MB:
             wipesize_cmd_string = " count=64"
@@ -6714,5 +6693,3 @@ class ToolsMicroSDWipeRandomView(View):
             )
 
         return Destination(MainMenuView)
-
-
