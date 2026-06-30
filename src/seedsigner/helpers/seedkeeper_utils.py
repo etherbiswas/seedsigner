@@ -308,7 +308,7 @@ def disconnect_smartcard_connections(controller):
         except Exception:
             pass
 
-    # Ensure gpg's smartcard daemon releases the reader as well
+    # Ensure any smartcard daemon releases the reader before card access
     try:
         from subprocess import run
         run(["gpgconf", "--kill", "scdaemon"], check=False)

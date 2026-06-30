@@ -46,12 +46,6 @@ from .tools_views import (
     _strength_to_length,
 )
 
-# Re-exported from gpg_views.py (TextQR display views shared across modules)
-from .gpg_views import (
-    ToolsTextQRFullScreenModeView,
-    ToolsTextQRTranscribeModePromptView,
-    _text_qr_done_destination,
-)
 from seedsigner.models.seed import Seed
 from seedsigner.models.settings_definition import SettingsConstants
 from .view import View, Destination, BackStackView, MainMenuView

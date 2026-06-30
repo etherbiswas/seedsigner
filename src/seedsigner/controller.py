@@ -181,14 +181,11 @@ class Controller(Singleton):
     address_explorer_data: dict = None
 
     sign_message_data: dict = None
-    gpg_keys_imported: bool = False
-    gpg_pending_message: str = None
     # TODO: end refactor section
 
     Satochip_Connector = None
     Satochip_PIN = None
     Satochip_Last_UID_SHA1 = None
-    GPG_Admin_PIN = None
     tools_common_card_filter: list[str] = None
     javacard_keys: dict | None = None
 
@@ -201,7 +198,6 @@ class Controller(Singleton):
     FLOW__ADDRESS_EXPLORER = "address_explorer"
     FLOW__SIGN_MESSAGE = "sign_message"
     FLOW__SATOCHIP_IMPORT_SEED = "satochip_import_seed"
-    FLOW__GPG_MESSAGE = "gpg_message"
     resume_main_flow: str = None
 
     back_stack: BackStack = None
@@ -469,7 +465,6 @@ class Controller(Singleton):
                         self.Satochip_Connector = None
 
                     # Always drop any cached OpenPGP admin PIN when returning home
-                    self.GPG_Admin_PIN = None
 
                 logger.info(f"\nback_stack: {self.back_stack}")
 
@@ -628,7 +623,6 @@ class Controller(Singleton):
         self.Satochip_PIN = None
         self.Satochip_Last_UID_SHA1 = None
         self.Satochip_Connector = None
-        self.GPG_Admin_PIN = None
         self.image_entropy_preview_frames = None
         self.image_entropy_final_image = None
 

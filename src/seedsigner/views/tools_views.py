@@ -351,7 +351,6 @@ class ToolsMenuView(View):
     SMARTCARD = ButtonOption("Smartcard Tools", FontAwesomeIconConstants.LOCK)
     MICROSD = ButtonOption("MicroSD Tools")
     BATTERY_CALIBRATION = ButtonOption("Battery Calibration")
-    GPG = ButtonOption("GPG Tools")
     NETWORK_INFO = ButtonOption("Network Info")
 
     def __init__(self, include_password_generator: bool = True):
@@ -382,7 +381,6 @@ class ToolsMenuView(View):
             #self.MICROSD,
             battery_calibration_button,
             #self.NETWORK_INFO if Path("/usr/bin/network-info").is_file() else None,
-            #self.GPG,
         ])
         button_data = [button for button in button_data if button is not None]
 
@@ -449,8 +447,6 @@ class ToolsMenuView(View):
         # elif button_data[selected_menu_num] == self.NETWORK_INFO:
         #     return Destination(ToolsNetworkInfoView)
         #
-        # elif button_data[selected_menu_num] == self.GPG:
-        #     return Destination(ToolsGPGMenuView)
 
 
 
@@ -1399,7 +1395,6 @@ class ToolsTextQRView(View):
 
 # Re-exports for backward compatibility
 from .smartcard_views import *  # noqa: F401, F403
-from .gpg_views import *  # noqa: F401, F403
 from .password_generator_views import *  # noqa: F401, F403
 
 # Star imports skip underscore-prefixed names; explicitly re-export them here.
@@ -1410,7 +1405,6 @@ from .password_generator_views import (  # noqa: F401
     _get_password_entropy_cache,
     _is_diceware_password_type,
     _save_password_to_seedkeeper,
-    _text_qr_done_destination,
 )
 
 from .smartcard_views import (  # noqa: F401
@@ -1421,19 +1415,3 @@ from .smartcard_views import (  # noqa: F401
     _prompt_specter_new_pin,
     _unlock_specter_card_if_needed,
 )
-
-from .gpg_views import (  # noqa: F401
-    _bip85_key_type_choices as _bip85_key_type_choices_gpg,
-    _bip85_subkey_specs as _bip85_subkey_specs_gpg,
-    _check_future_key_creation as _check_future_key_creation_gpg,
-    _normalize_date_input as _normalize_date_input_gpg,
-    _select_import_algo as _select_import_algo_gpg,
-    _text_qr_done_destination as _text_qr_done_destination_gpg,
-)
-
-# Re-export for backward compatibility with tests and tools/bip85_pgp.py
-_bip85_subkey_specs = _bip85_subkey_specs_gpg  # noqa: F401 W0603
-_bip85_key_type_choices = _bip85_key_type_choices_gpg  # noqa: F401 W0603
-_check_future_key_creation = _check_future_key_creation_gpg  # noqa: F401 W0603
-_select_import_algo = _select_import_algo_gpg  # noqa: F401 W0603
-_normalize_date_input = _normalize_date_input_gpg  # noqa: F401 W0603
